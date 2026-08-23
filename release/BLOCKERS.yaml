@@ -1,11 +1,8 @@
 last_verified: '2026-08-23'
 deployment_state: Source-3 (ZIP v7) desplegado en VM 110 en modo SHADOW. 7 servicios
-  propietarios healthy en 127.0.0.1:8081-8087. Migraciones 004/005/006 consolidadas
-  con trazabilidad (004 intacta 9c1850, 005 registrada 853d8622 ejecutada con cast
-  5ba50e9c, 006 aplicada 4f87541289fe reconcilia 005). Git commit 5317ce4 en github.com/softwalk/SAILES.
-  8 digests OCI ligados al despliegue real (8/8 MATCH). PostgreSQL con TLS (ssl on,
-  verify-full, TLSv1.3). RAM mejorada a ~7.9 GiB efectivos (balloon 8192 MB). 65/65
-  tests PASS.
+  propietarios healthy en 127.0.0.1:8081-8087. Migraciones 004/005/006 consolidadas.
+  Git commit 4701a1f en github.com/softwalk/SAILES. 8 digests OCI (8/8 MATCH). PostgreSQL
+  con TLS (verify-full, TLSv1.3). RAM ~7.9 GiB efectivos. 65/65 tests PASS.
 blockers:
 - id: INFRA-001
   severity: P1
@@ -39,19 +36,39 @@ blockers:
 - id: LOCAL-007
   severity: P0
   status: resolved
-  note: 'Capacidad del host: RAM mejorada a ~7.9 GiB efectivos tras dar de baja 103/210
-    + balloon 8192 MB. Gate de RAM PASS.'
+  note: 'Capacidad del host: RAM mejorada a ~7.9 GiB efectivos (gate de RAM PASS).'
 - id: EXT-001
   severity: P0
   status: open
-  note: API keys reales Kimi/DeepSeek/Meta/VICIdial (solo el usuario; proveedor de
-    modelos pendiente).
-- id: Source3-001
-  severity: info
-  status: info
-  note: 'Source-3 desplegado en VM110 shadow. Migraciones 004/005/006 consolidadas.
-    TLS PostgreSQL habilitado (verify-full, TLSv1.3). RAM mejorada. 65/65 tests PASS.
-    Gate canónico: 2 FAIL restantes (ATLANTIS_ENV=production, proveedor de modelos).
-    Bloqueos restantes: production (perfil piloto), proveedor de modelos (EXT-006),
-    aprobaciones externas.'
+  note: 'REPEP/legal: evidencias legales y de registro REPEP (solo el usuario).'
+- id: EXT-002
+  severity: P0
+  status: open
+  note: 'Marketia: onboarding/permisos del canal Marketia.'
+- id: EXT-003
+  severity: P0
+  status: open
+  note: 'Atlantis-Neobot: integración/aprobación del bot.'
+- id: EXT-004
+  severity: P0
+  status: open
+  note: 'Meta/WABA: WhatsApp Business API aprobada (app, plantillas, número).'
+- id: EXT-005
+  severity: P1
+  status: open
+  note: 'Supply chain: digests OCI de las 8 imágenes (resuelto: 8/8 MATCH; pendiente
+    verificación de contenido).'
+- id: EXT-006
+  severity: P0
+  status: open
+  note: 'Modelos Kimi/DeepSeek: API keys reales (proveedor de modelos aprobado pendiente).'
+- id: EXT-007
+  severity: P1
+  status: open
+  note: 'Seguridad/pentest: revisión de seguridad externa.'
+- id: EXT-008
+  severity: P1
+  status: open
+  note: 'Distribución/licencias/SBOM: licencias de terceros, SBOM completo, distribución
+    a clientes.'
 notes: []
