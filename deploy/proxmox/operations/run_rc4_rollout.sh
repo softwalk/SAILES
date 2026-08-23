@@ -24,6 +24,7 @@ trap on_error ERR
 "$ops_dir/10_backup.sh" --execute
 "$ops_dir/20_apply_migration_004.sh" --execute
 "$ops_dir/21_apply_migration_005.sh" --execute
+"$ops_dir/22_apply_migration_006.sh" --execute --approved-by "${APPROVED_BY:-}" --approved-date "${APPROVED_DATE:-}" --evidence-ref "${EVIDENCE_REF:-}" ${EVIDENCE_SHA:+--evidence-sha256 "$EVIDENCE_SHA"}
 "$ops_dir/30_build_images.sh" --execute
 "$ops_dir/40_deploy_shadow.sh" --execute
 "$ops_dir/50_postdeploy_validate.sh"

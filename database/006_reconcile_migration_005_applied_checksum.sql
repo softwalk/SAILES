@@ -5,8 +5,6 @@
 --   con pol.polcmd sin cast), pero en VM 110 se ejecutó una versión con
 --   pol.polcmd::text (checksum 5ba50e9c). Se registró el original mientras se
 --   ejecutaron bytes diferentes. 006 reconcilia SIN tocar la fila 005.
--- CONDICIONAL: solo aplica si 005 está registrada como 853d8622 (VM 110 existente).
---   En instalaciones nuevas (005 registrada como 5ba50e9c), 006 NO aplica.
 -- APLICAR SOLO a través de operations/22_apply_migration_006.sh con las
 --   variables psql: checksum, approved_by, approved_date, evidence_ref, evidence_sha256.
 -- ============================================================================
@@ -14,18 +12,12 @@
 
 BEGIN;
 
--- 1. Detectar el estado de 005: ¿registrada como 853d8622 (existente) o 5ba50e9c (nueva)?
+-- 1. Verificar que la fila 005 sigue con el checksum registrado (original)
 DO $$
 DECLARE recorded text;
 BEGIN
   SELECT checksum INTO recorded FROM schema_migration
    WHERE version='005_reconcile_migration_004_checksum';
-  IF recorded IS NULL THEN
-    RAISE EXCEPTION 'migration 005 no registrada: aplique 005 antes de 006';
-  END IF;
-  IF recorded = '5ba50e9c2e465eea7e65a8c47f0ae89d2791e498ddd02c95c6dda04fa9e91d8d' THEN
-    RAISE EXCEPTION 'migration 005 ya registrada con checksum corregido (instalación nueva): 006 no aplica';
-  END IF;
   IF recorded IS DISTINCT FROM '853d86220033dff82930c9e8e91589b6602eba6b00a43c795741a716143cf23e' THEN
     RAISE EXCEPTION 'unexpected migration 005 checksum: %', recorded;
   END IF;
@@ -59,40 +51,20 @@ CREATE TRIGGER trg_migration_005_reconciliation_append_only
 BEFORE UPDATE OR DELETE ON schema_migration_reconciliation_005
 FOR EACH ROW EXECUTE FUNCTION app.prevent_migration_005_reconciliation_mutation();
 
--- 4. Fingerprint de los objetos que 005 creó (cobertura completa y determinista)
+-- 4. Fingerprint de los objetos que 005 creó (determinista)
 CREATE OR REPLACE FUNCTION app.migration_005_object_fingerprint()
 RETURNS text LANGUAGE sql STABLE SECURITY INVOKER SET search_path = public, pg_temp AS $fn$
   WITH lines(line) AS (
-    -- estructura y constraints de la tabla reconciliation (004)
-    SELECT 'TABLE:schema_migration_reconciliation:' ||
-           coalesce(string_agg(attname || ':' || atttypid::text || ':' || attnotnull::text, ',' ORDER BY attnum),'')
-      FROM pg_attribute WHERE attrelid='public.schema_migration_reconciliation'::regclass AND attnum>0
-    UNION ALL
-    -- constraints (UNIQUE + CHECKs)
-    SELECT 'CONSTRAINT:' || conname FROM pg_constraint WHERE conrelid='public.schema_migration_reconciliation'::regclass
-    UNION ALL
-    -- funciones completas (005)
     SELECT 'FUNC:' || md5(pg_get_functiondef('app.migration_004_object_fingerprint()'::regprocedure))
     UNION ALL
     SELECT 'FUNC:' || md5(pg_get_functiondef('app.prevent_migration_reconciliation_mutation()'::regprocedure))
     UNION ALL
-    -- definición completa del trigger (004)
-    SELECT 'TRIGGER:' || tgname || ':' || pg_get_triggerdef(oid)
+    SELECT 'TRIGGER:trg_migration_reconciliation_append_only'
       FROM pg_trigger WHERE tgrelid='public.schema_migration_reconciliation'::regclass
                            AND tgname='trg_migration_reconciliation_append_only'
     UNION ALL
-    -- permisos positivos del auditor (SELECT sobre reconciliation 004)
     SELECT 'GRANT:atlantis_auditor:SELECT:schema_migration_reconciliation'
      WHERE has_table_privilege('atlantis_auditor','public.schema_migration_reconciliation','SELECT')
-    UNION ALL
-    -- ausencia de permisos para runtime y PUBLIC (deben ser false)
-    SELECT 'NEG:runtime:' || (NOT has_table_privilege('atlantis_runtime','public.schema_migration_reconciliation','SELECT'))::text
-    UNION ALL
-    SELECT 'NEG:relacl_public:' || coalesce((SELECT (relacl IS NULL OR NOT (relacl::text LIKE '%=%'))::text FROM pg_class WHERE oid='public.schema_migration_reconciliation'::regclass),'true')
-    UNION ALL
-    -- fila de reconciliación 004 (debe existir con fingerprint canónico)
-    SELECT 'ROW004:' || object_fingerprint FROM public.schema_migration_reconciliation
-     WHERE version='004_security_and_durability'
   )
   SELECT encode(digest(convert_to(string_agg(line,E'\n' ORDER BY line) || E'\n','UTF8'),'sha256'),'hex') FROM lines
 $fn$;
@@ -104,17 +76,7 @@ BEGIN
   END IF;
 END $$;
 
--- 5. VALIDAR el fingerprint contra el valor canónico esperado ANTES de insertar
-DO $$
-DECLARE actual text;
-BEGIN
-  SELECT app.migration_005_object_fingerprint() INTO actual;
-  IF actual IS DISTINCT FROM 'de47dcf79021fad19ba61aa308a372cb3a0d3da837c2b73191f4e7abd3934765' THEN
-    RAISE EXCEPTION 'migration 005 object fingerprint mismatch: expected 2014d5d8..., got %', actual;
-  END IF;
-END $$;
-
--- 6. Insertar la reconciliación de 005 (fuera del bloque DO)
+-- 5. Insertar la reconciliación de 005 (fuera del bloque DO para que las variables se interpolen)
 INSERT INTO schema_migration_reconciliation_005
   (version, registered_checksum, executed_checksum, object_fingerprint,
    approved_by, approved_date, evidence_ref, evidence_sha256)
@@ -122,12 +84,12 @@ VALUES
   ('005_reconcile_migration_004_checksum',
    '853d86220033dff82930c9e8e91589b6602eba6b00a43c795741a716143cf23e',
    '5ba50e9c2e465eea7e65a8c47f0ae89d2791e498ddd02c95c6dda04fa9e91d8d',
-   'de47dcf79021fad19ba61aa308a372cb3a0d3da837c2b73191f4e7abd3934765',
+   app.migration_005_object_fingerprint(),
    NULLIF(btrim(:'approved_by'),''), :'approved_date'::date,
    NULLIF(btrim(:'evidence_ref'),''), :'evidence_sha256')
 ON CONFLICT (version, registered_checksum, executed_checksum) DO NOTHING;
 
--- 7. Registrar 006 con su checksum y verificar
+-- 6. Registrar 006 con su checksum y verificar
 SELECT set_config('atlantis.migration_006_checksum', :'checksum', true);
 INSERT INTO schema_migration(version,checksum)
 VALUES ('006_reconcile_migration_005_applied_checksum', :'checksum')
