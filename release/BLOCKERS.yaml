@@ -1,0 +1,195 @@
+release_status: blocked
+target: production-and-client-distribution
+last_verified: '2026-08-23'
+deployment_state: 'RC 0.9.0-rc4 procedente del ZIP v6 está desplegado en VM 110 (192.168.100.160),
+  en modo SHADOW y con 7 servicios propietarios saludables en 127.0.0.1:8081-8087.
+  La evidencia operativa confirma CRM PostgreSQL, migración 004 aplicada con el checksum
+  heredado y 62/62 pruebas de esa entrega. También confirma PostgreSQL de desarrollo
+  sin TLS, sólo ~1.78 GiB efectivos y sin swap. El candidato ZIP v7 pasa 65/65 localmente,
+  pero todavía no está desplegado. Distribución y piloto siguen bloqueados por las
+  evidencias externas y de infraestructura siguientes.
+
+  '
+candidate_state: 'RC 0.9.0-rc4 ZIP v7 construido como fuente revisable; corrige RLS
+  GLOBAL, durabilidad/TTL, decisiones one-shot, autenticación workload, HTTP/TLS y
+  lock con hashes. Añade reconciliación 005 auditada y pilot gate técnico. Suite local
+  65/65 PASS. ZIP v7 no ha sido desplegado en VM 110.
+
+  '
+blockers:
+- id: EXT-001
+  owner: Legal-Privacy
+  status: OPEN
+  evidence: Approved REPEP acquisition method, validity, call hours, recording notice
+    and retention
+- id: EXT-002
+  owner: Marketia
+  status: OPEN
+  evidence: Signed API contract, authentication, webhooks and field ownership
+- id: EXT-003
+  owner: Atlantis-Neobot
+  status: OPEN
+  evidence: Signed technical contract and enforcement point before originate
+- id: EXT-004
+  owner: Meta-WhatsApp
+  status: OPEN
+  evidence: WABA account, approved opt-in, templates, phone IDs and sandbox credentials
+- id: EXT-005
+  owner: Platform
+  status: PARTIAL
+  evidence: 'Imagen base propietaria atlantis-python-base:0.9.0 construida y pinada
+    por digest (sha256:b5f875387bcdfc309af330b6ca8649998a4d6616c4a6e60c417edd8f4d5d178a)
+    con psycopg/pika/langgraph. RC4 añade lock transitivo con hashes. Pendiente: reconstruir
+    y registrar los digests de las 7 imágenes RC4 y los commits inmutables del repo.
+
+    '
+- id: EXT-006
+  owner: MLOps-Legal
+  status: OPEN
+  evidence: Exact Kimi and DeepSeek model IDs, terms, region and transfer assessment
+- id: EXT-007
+  owner: Security
+  status: PARTIAL
+  evidence: 'RLS verificado en las 31 tablas originales + 4 nuevas de 003 (relrowsecurity
+    y relforcerowsecurity=true; test E2E confirma 0 filtrado a tenant ajeno). Pendiente:
+    RC4 exige workload HMAC y PostgreSQL verify-full en producción, y soporta CA/mTLS
+    en clientes internos. Pendiente: provisionar certificados, verificarlo en VM 110,
+    integrar IdP donde corresponda y completar SAST/DAST/SCA/pentest.
+
+    '
+- id: EXT-008
+  owner: Release
+  status: OPEN
+  evidence: Final CycloneDX/SPDX SBOM, notices, license texts, corresponding sources
+    and signed attestation
+- id: INFRA-001
+  owner: Security
+  status: OPEN
+  evidence: 'Rotate the documented LiteLLM bootstrap key and Grafana bootstrap password;
+    store replacements only in 0600 secret files. Decisión del operador 2026-08-22:
+    no rotar aún (documentado; validate_infrastructure.sh lo sigue marcando).
+
+    '
+- id: INFRA-002
+  owner: Platform
+  status: OPEN
+  evidence: 'Restrict RabbitMQ management, Node-RED, Prometheus and Grafana to an
+    approved administrator CIDR or VPN; no direct Internet exposure. Decisión del
+    operador 2026-08-22: documentado para gate de piloto, sin restringir ahora (preserva
+    acceso LAN).
+
+    '
+- id: INFRA-003
+  owner: Platform
+  status: CLOSED
+  evidence: 'Nombres DNS de servicios verificados en despliegue real 2026-08-22: postgres,
+    rabbitmq, litellm, crm_api resuelven correctamente en las redes externas atlantis-platform_atlantis-
+    control/data. Este cierre describe RC2; RC4 cambia CRM a PostgreSQL y exige una
+    nueva validación de despliegue antes de piloto.
+
+    '
+- id: INFRA-004
+  owner: Security
+  status: OPEN
+  evidence: 'Provision separate least-privilege PostgreSQL runtime password and LiteLLM
+    virtual key; do not reuse master or bootstrap credentials. Nota: servicios usan
+    rol atlantis_runtime pero con la contraseña del secreto compartido; separar contraseñas
+    antes de piloto.
+
+    '
+- id: INFRA-005
+  owner: Release
+  status: PARTIAL
+  evidence: '7 imágenes OCI propietarias construidas en VM 110 desde atlantis-python-base
+    (digest pinado). Pendiente: attestation firmada y registro de digests por servicio.
+
+    '
+notes:
+- id: LOCAL-001
+  severity: resolved-in-candidate
+  note: 'RC2 usaba secretos 0640 y group_add:[1000]. RC4 elimina el grupo compartido:
+    el kit deja los archivos 0400 propiedad de uid 10001 y cada servicio monta sólo
+    sus secretos. Pendiente validar ACL/bind mounts en VM 110 y migrar a Vault/Secret
+    Manager antes de producción (INFRA-004).
+
+    '
+- id: LOCAL-002
+  severity: low
+  note: 'compliance_gate.py escanea el .venv local (paquetes pip de terceros) como
+    si fuera código fuente y reporta falsos positivos de ''unsafe subprocess shell''.
+    El código propio pasa el gate (verificado excluyendo .venv). Bug menor del RC
+    a reportar upstream.
+
+    '
+- id: LOCAL-003
+  severity: info
+  note: 'Ajustes de compatibilidad aplicados a módulos de la entrega anterior (2026-08-22)
+    tras la actualización a RC 0.9.0: (1) consumer.py — TokenVerifier.consume_jti
+    ahora recibe (jti, claims); (2) pipeline.py — CRM API exige header Idempotency-Key.
+    Ambos E2E PASS.
+
+    '
+- id: LOCAL-004
+  severity: resolved
+  note: 'CAPACIDAD (plan §10): RESUELTO 2026-08-22. VM 110 ampliada de 4 GB a 8 GB
+    RAM (qm set 110 --memory 8192, reinicio controlado). Tras el cambio: 7031 MB útiles,
+    ~19% de uso sostenido (1391 MB usados, 5639 MB disponibles). 15/15 contenedores
+    (7 aplicación + 5 plataforma + 3 observabilidad) arrancaron solos y healthy; healthcheck
+    base 10/10 OK. Ya no se alcanza el umbral del 80% del plan.
+
+    '
+- id: LOCAL-005
+  severity: info
+  note: 'DNS Docker (plan §4/INFRA-003, corregido 2026-08-22): el nombre ''litellm''
+    no resolvía en la red atlantis-control (el contenedor LiteLLM se llama atlantis-platform-model_gateway-1
+    y comparte el alias ''model_gateway'' con el servicio de aplicación homónimo).
+    Se corrigieron KIMI_BASE_URL/DEEPSEEK_BASE_URL/ATLANTIS_LITELLM_BASE_URL a http://atlantis-platform-model_gateway-1:4000/v1.
+    Resolución verificada (172.19.0.5).
+
+    '
+- id: LOCAL-006
+  severity: info
+  note: 'CAMINO A PILOTO (plan §11, preparado 2026-08-22, NO activado). Artefactos:
+    /opt/atlantis/documentation/pilot_readiness.yaml (allowlist, límites diarios,
+    kill switch, rollback, checklist) y /opt/atlantis/scripts/pilot_kill_switch.sh
+    (engage/release/status). Kill switch PROBADO end-to-end: engage detiene los 3
+    adaptadores de canal (voice/whatsapp/marketia) mientras Policy Gateway y Orchestrator
+    siguen vivos (fail-closed, FR-028 ≤60s); release los reanuda healthy. Mecanismos
+    del RC listos: frequency_counter, suppression, kill_switch en PolicyEngine, allowed_hours
+    9-20. PENDIENTE de piloto: registrar allowlist de contactos de prueba, cargar
+    límites diarios, snapshot VM 110 + dump cifrado + ensayo de restore (§6), y cerrar
+    EXT-001..008 e INFRA-001/002/004.
+
+    '
+- id: LOCAL-007
+  severity: high
+  note: 'CAPACIDAD DEL HOST (validación 2026-08-22): VM 110 configurada a 8192 MB,
+    pero el balloon driver la reduce a ~1778 MB efectivos (balloon actual=2048, max_mem=8192)
+    porque el host Proxmox está al 86% de RAM (16996/19771 MB, 2775 MB disponibles).
+    El plan §10 requiere 8 GB REALES antes del piloto. Acciones posibles: (a) subir
+    balloon mínimo de VM 110, (b) reducir/migrar otras VMs (100 homeassistant 4GB,
+    102 hermes 8GB), (c) ampliar RAM física del host, (d) configurar swap en VM 110.
+    Guest MemAvailable ~60 MB bajo carga actual. DECISIÓN DE PILOTO: condicionado
+    a resolver la memoria del host.
+
+    '
+- id: LOCAL-008
+  severity: info
+  note: 'CONTRATO HERMES VM 102 (validación 2026-08-22): no existe API de tareas en
+    192.168.100.155:8000 como asume el .env (ATLANTIS_HERMES_BASE_URL). VM 102 expone:
+    :3000 UI Hermes (Next.js), :4000 Model Gateway compatible OpenAI (deepseek-chat,
+    deepseek-r1, qwen-local, gemma4-*, etc., auth con master key compartida), :11434
+    Ollama (solo nomic-embed-text). La integración Hermes ejecutor subordinado requiere
+    definir endpoint real de tareas + auth + timeout + presupuesto + clasificación
+    de datos ANTES de enviar datos personales. Gate de piloto pendiente.
+
+    '
+- id: Source3-001
+  severity: info
+  note: 'Source-3 (ZIP v7) desplegado en VM110 shadow. Migración 005 OFICIAL aplicada:
+    tabla schema_migration_reconciliation con trigger append-only, funciones migration_004_object_fingerprint
+    + prevent_mutation, fingerprint oficial 53e77f49 (recalculado == almacenado),
+    evidence_sha256 registrado. 004 histórico 9c1850 intacto. 65/65 tests PASS. Preflight
+    oficial instalado (psql). Bloqueos restantes: TLS PostgreSQL (ssl off -> verify-full
+    requerido por el gate), RAM host, Git commit, digests evidence, model providers,
+    ownership/mode del .env.'

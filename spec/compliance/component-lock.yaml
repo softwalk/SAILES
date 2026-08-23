@@ -1,0 +1,214 @@
+schema_version: 1
+release_status: blocked
+runtime_lock:
+  path: deploy/proxmox/base/requirements-runtime.lock
+  sha256: 37f71e9cbe3c4bc309c5659b63961351b56794cac338fe3bb3f29b357d481d2d
+  resolver: uv-pip-compile
+  install_mode: "pip --require-hashes"
+policy:
+  forbid_mutable_tags: true
+  forbid_unknown_licenses: true
+  forbidden_components:
+    - n8n
+  proprietary_services:
+    - atlantis-neobot
+    - marketia
+    - policy-gateway
+    - crm-api
+    - adapters
+components:
+  - name: python-runtime
+    kind: oci-image
+    repository: https://hub.docker.com/_/python
+    tag_or_revision: 3.12-slim-bookworm
+    commit: not-applicable-oci-artifact
+    artifact_or_model_id: python:3.12-slim-bookworm
+    digest: sha256:a116514e19457bcb7af7efe9c3dd0b9b71e85b317694e7882a1c52aa15a78134
+    license_spdx: LicenseRef-PSF-2.0
+    license_text_sha256: TBD
+    owner: Platform
+    distribution_mode: separate-container-layer
+    source_obligation: preserve-python-license-and-image-notices
+  - name: postgresql
+    kind: oci-image
+    repository: https://hub.docker.com/_/postgres
+    tag_or_revision: 16-bookworm
+    commit: not-applicable-oci-artifact
+    artifact_or_model_id: postgres:16-bookworm
+    digest: sha256:60f4761b9035e0b8d5218f701a8c3382f641bf12b1604822574cf5be3baeb537
+    license_spdx: PostgreSQL
+    license_text_sha256: TBD
+    owner: Data
+    distribution_mode: installed-infrastructure
+    source_obligation: preserve-license
+  - name: psycopg
+    kind: python-package
+    repository: https://github.com/psycopg/psycopg
+    tag_or_revision: 3.3.4
+    commit: TBD
+    artifact_or_model_id: psycopg[binary]==3.3.4
+    digest: TBD
+    license_spdx: LGPL-3.0-only
+    license_text_sha256: TBD
+    owner: Platform
+    distribution_mode: proprietary-service-runtime-dependency
+    source_obligation: include-lgpl-and-gpl-texts-notice-and-relinking-compliance
+    license_source: https://github.com/psycopg/psycopg/blob/master/LICENSE.txt
+  - name: pika
+    kind: python-package
+    repository: https://github.com/pika/pika
+    tag_or_revision: 1.4.4
+    commit: TBD
+    artifact_or_model_id: pika==1.4.4
+    digest: TBD
+    license_spdx: BSD-3-Clause
+    license_text_sha256: TBD
+    owner: Platform
+    distribution_mode: proprietary-service-runtime-dependency
+    source_obligation: preserve-license-and-notices
+    license_source: https://github.com/pika/pika/blob/master/LICENSE
+  - name: langgraph
+    kind: python-package
+    repository: https://github.com/langchain-ai/langgraph
+    tag_or_revision: 1.2.11
+    commit: TBD
+    artifact_or_model_id: langgraph==1.2.11
+    digest: TBD
+    license_spdx: MIT
+    license_text_sha256: TBD
+    owner: Platform
+    distribution_mode: proprietary-service-runtime-dependency
+    source_obligation: preserve-license-and-notices; excludes separately-licensed LangGraph Platform
+    license_source: https://github.com/langchain-ai/langgraph/blob/main/LICENSE
+  - name: rabbitmq
+    kind: oci-image
+    repository: https://hub.docker.com/_/rabbitmq
+    tag_or_revision: 3.13-management-alpine
+    commit: not-applicable-oci-artifact
+    artifact_or_model_id: rabbitmq:3.13-management-alpine
+    digest: sha256:606d8c0d6b3c18d1da9afc53bc7cdb2a8d5486df91b5a9830e9e07626c9ae281
+    license_spdx: MPL-2.0
+    license_text_sha256: TBD
+    owner: Platform
+    distribution_mode: installed-infrastructure
+    source_obligation: include-license-and-source-offer-if-distributed
+  - name: valkey
+    kind: oci-image
+    repository: https://hub.docker.com/r/valkey/valkey
+    tag_or_revision: 8-alpine
+    commit: not-applicable-oci-artifact
+    artifact_or_model_id: valkey/valkey:8-alpine
+    digest: sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
+    license_spdx: BSD-3-Clause
+    license_text_sha256: TBD
+    owner: Platform
+    distribution_mode: installed-infrastructure
+    source_obligation: preserve-license-and-notices
+  - name: litellm
+    kind: oci-image
+    repository: https://github.com/BerriAI/litellm
+    tag_or_revision: main-latest
+    commit: TBD
+    artifact_or_model_id: ghcr.io/berriai/litellm
+    digest: sha256:8386035f69266617cb88f35380a78e81a66e047a52821c73713666247ff2aba0
+    license_spdx: MIT
+    license_text_sha256: TBD
+    owner: MLOps
+    distribution_mode: installed-infrastructure
+    source_obligation: replace-mutable-tag-with-commit-and-preserve-license
+  - name: openoutreach
+    kind: external-cli
+    repository: https://github.com/eracle/OpenOutreach
+    tag_or_revision: TBD
+    commit: TBD
+    artifact_or_model_id: TBD
+    digest: TBD
+    license_spdx: GPL-3.0-only
+    license_text_sha256: TBD
+    owner: Platform
+    distribution_mode: unmodified-external-process
+    source_obligation: include-license-and-corresponding-source-if-modified-and-distributed
+  - name: node-red
+    kind: isolated-service
+    repository: https://github.com/node-red/node-red
+    tag_or_revision: 4.0.9-22-minimal
+    commit: TBD
+    artifact_or_model_id: nodered/node-red:4.0.9-22-minimal
+    digest: sha256:982aab34071a4d2c361e2a20aae781c50678e3f098331b295bcf37f04fd9c25d
+    license_spdx: Apache-2.0
+    license_text_sha256: TBD
+    owner: Platform
+    distribution_mode: separate-container
+    source_obligation: preserve-license-and-notices
+  - name: prometheus
+    kind: oci-image
+    repository: https://github.com/prometheus/prometheus
+    tag_or_revision: v2.54.1
+    commit: TBD
+    artifact_or_model_id: prom/prometheus:v2.54.1
+    digest: sha256:f6639335d34a77d9d9db382b92eeb7fc00934be8eae81dbc03b31cfe90411a94
+    license_spdx: Apache-2.0
+    license_text_sha256: TBD
+    owner: SRE
+    distribution_mode: installed-infrastructure
+    source_obligation: preserve-license-and-notices
+  - name: grafana
+    kind: oci-image
+    repository: https://github.com/grafana/grafana
+    tag_or_revision: 11.2.0
+    commit: TBD
+    artifact_or_model_id: grafana/grafana:11.2.0
+    digest: sha256:408afb9726de5122b00a2576763a8a57a3c86d5b0eff5305bc994ceb3eb96c3f
+    license_spdx: AGPL-3.0-only
+    license_text_sha256: TBD
+    owner: SRE
+    distribution_mode: separate-unmodified-service
+    source_obligation: include-license-and-corresponding-source-if-network-modified-or-distributed
+  - name: opentelemetry-collector
+    kind: oci-image
+    repository: https://github.com/open-telemetry/opentelemetry-collector-releases
+    tag_or_revision: v0.108.0
+    commit: TBD
+    artifact_or_model_id: otel/opentelemetry-collector:0.108.0
+    digest: sha256:923eb1cfae32fe09676cfd74762b2b237349f2273888529594f6c6ffe1fb3d7e
+    license_spdx: Apache-2.0
+    license_text_sha256: TBD
+    owner: SRE
+    distribution_mode: installed-infrastructure
+    source_obligation: preserve-license-and-notices
+  - name: caddy
+    kind: oci-image
+    repository: https://github.com/caddyserver/caddy
+    tag_or_revision: 2.8.4-alpine
+    commit: TBD
+    artifact_or_model_id: caddy:2.8.4-alpine
+    digest: sha256:af32e97399febea808609119bb21544d0265c58a02836576e32a2d082c262c17
+    license_spdx: Apache-2.0
+    license_text_sha256: TBD
+    owner: Platform
+    distribution_mode: installed-infrastructure
+    source_obligation: preserve-license-and-notices
+  - name: kimi-k3
+    kind: model
+    repository: https://huggingface.co/moonshotai
+    tag_or_revision: TBD
+    commit: TBD
+    artifact_or_model_id: TBD
+    digest: TBD
+    license_spdx: LicenseRef-Kimi-K3
+    license_text_sha256: TBD
+    owner: MLOps
+    distribution_mode: api-or-approved-weights
+    source_obligation: review-model-license-and-thresholds
+  - name: deepseek
+    kind: model
+    repository: https://huggingface.co/deepseek-ai
+    tag_or_revision: TBD
+    commit: TBD
+    artifact_or_model_id: TBD
+    digest: TBD
+    license_spdx: TBD
+    license_text_sha256: TBD
+    owner: MLOps
+    distribution_mode: api-or-approved-weights
+    source_obligation: verify-exact-model-license

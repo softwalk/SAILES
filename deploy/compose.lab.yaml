@@ -1,0 +1,142 @@
+name: atlantis-sales-lab
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:?Set an immutable PostgreSQL image reference with sha256 digest}
+    environment:
+      POSTGRES_DB: atlantis
+      POSTGRES_USER: atlantis
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets: [postgres_password]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../database:/docker-entrypoint-initdb.d:ro
+    networks: [data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atlantis -d atlantis"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  node_red:
+    image: ${NODE_RED_IMAGE:?Set an immutable Node-RED image reference with sha256 digest}
+    profiles: [auxiliary]
+    environment:
+      NODE_RED_CREDENTIAL_SECRET_FILE: /run/secrets/node_red_secret
+    secrets: [node_red_secret]
+    read_only: true
+    tmpfs: [/tmp]
+    networks: [control]
+  policy_gateway:
+    build:
+      context: ..
+      dockerfile: services/policy_gateway/Dockerfile
+      args:
+        PYTHON_BASE_IMAGE: ${PYTHON_BASE_IMAGE:?Set an immutable Python image reference with sha256 digest}
+    environment:
+      ATLANTIS_SHADOW_MODE: "true"
+      ATLANTIS_JIT_SECRET_FILE: /run/secrets/jit_secret
+    secrets: [jit_secret]
+    ports: ["127.0.0.1:8081:8081"]
+    networks: [control]
+    read_only: true
+    tmpfs: [/tmp]
+  crm_api:
+    build:
+      context: ..
+      dockerfile: services/crm_api/Dockerfile
+      args:
+        PYTHON_BASE_IMAGE: ${PYTHON_BASE_IMAGE:?Set an immutable Python image reference with sha256 digest}
+    ports: ["127.0.0.1:8082:8082"]
+    environment:
+      ATLANTIS_SHADOW_MODE: "true"
+      ATLANTIS_CRM_STORAGE: memory
+    networks: [control, data]
+    read_only: true
+    tmpfs: [/tmp]
+  orchestrator:
+    build:
+      context: ..
+      dockerfile: services/orchestrator/Dockerfile
+      args:
+        PYTHON_BASE_IMAGE: ${PYTHON_BASE_IMAGE:?Set an immutable Python image reference with sha256 digest}
+    ports: ["127.0.0.1:8083:8083"]
+    networks: [control, data]
+    read_only: true
+    tmpfs: [/tmp]
+  model_gateway:
+    build:
+      context: ..
+      dockerfile: services/model_gateway/Dockerfile
+      args:
+        PYTHON_BASE_IMAGE: ${PYTHON_BASE_IMAGE:?Set an immutable Python image reference with sha256 digest}
+    ports: ["127.0.0.1:8084:8084"]
+    networks: [control]
+    read_only: true
+    tmpfs: [/tmp]
+  voice_adapter:
+    build:
+      context: ..
+      dockerfile: services/channel_adapters/Dockerfile
+      args:
+        PYTHON_BASE_IMAGE: ${PYTHON_BASE_IMAGE:?Set an immutable Python image reference with sha256 digest}
+    environment:
+      ADAPTER_MODE: voice
+      PORT: "8085"
+      ATLANTIS_SHADOW_MODE: "true"
+      ATLANTIS_JIT_SECRET_FILE: /run/secrets/jit_secret
+      VICIDIAL_WEBHOOK_SECRET_FILE: /run/secrets/vicidial_webhook_secret
+      ATLANTIS_NEOBOT_WEBHOOK_SECRET_FILE: /run/secrets/neobot_webhook_secret
+    secrets: [jit_secret, vicidial_webhook_secret, neobot_webhook_secret]
+    ports: ["127.0.0.1:8085:8085"]
+    networks: [control, channels]
+    read_only: true
+    tmpfs: [/tmp]
+  whatsapp_adapter:
+    build:
+      context: ..
+      dockerfile: services/channel_adapters/Dockerfile
+      args:
+        PYTHON_BASE_IMAGE: ${PYTHON_BASE_IMAGE:?Set an immutable Python image reference with sha256 digest}
+    environment:
+      ADAPTER_MODE: whatsapp
+      PORT: "8086"
+      ATLANTIS_SHADOW_MODE: "true"
+      ATLANTIS_JIT_SECRET_FILE: /run/secrets/jit_secret
+      META_APP_SECRET_FILE: /run/secrets/meta_app_secret
+      META_WEBHOOK_VERIFY_TOKEN_FILE: /run/secrets/meta_webhook_verify_token
+    secrets: [jit_secret, meta_app_secret, meta_webhook_verify_token]
+    ports: ["127.0.0.1:8086:8086"]
+    networks: [control, channels]
+    read_only: true
+    tmpfs: [/tmp]
+  marketia_adapter:
+    build:
+      context: ..
+      dockerfile: services/channel_adapters/Dockerfile
+      args:
+        PYTHON_BASE_IMAGE: ${PYTHON_BASE_IMAGE:?Set an immutable Python image reference with sha256 digest}
+    environment:
+      ADAPTER_MODE: marketia
+      PORT: "8087"
+      ATLANTIS_SHADOW_MODE: "true"
+      MARKETIA_WEBHOOK_SECRET_FILE: /run/secrets/marketia_webhook_secret
+    secrets: [marketia_webhook_secret]
+    ports: ["127.0.0.1:8087:8087"]
+    networks: [control]
+    read_only: true
+    tmpfs: [/tmp]
+
+secrets:
+  postgres_password: {file: ./secrets/postgres_password.txt}
+  node_red_secret: {file: ./secrets/node_red_secret.txt}
+  jit_secret: {file: ./secrets/jit_secret.txt}
+  meta_app_secret: {file: ./secrets/meta_app_secret.txt}
+  meta_webhook_verify_token: {file: ./secrets/meta_webhook_verify_token.txt}
+  vicidial_webhook_secret: {file: ./secrets/vicidial_webhook_secret.txt}
+  neobot_webhook_secret: {file: ./secrets/neobot_webhook_secret.txt}
+  marketia_webhook_secret: {file: ./secrets/marketia_webhook_secret.txt}
+volumes:
+  postgres_data: {}
+networks:
+  control: {internal: true}
+  data: {internal: true}
+  channels: {}

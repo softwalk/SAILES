@@ -1,0 +1,19 @@
+# Insert into the existing Caddy configuration on VM 110 only after shadow validation.
+# Administrative UIs stay off the public reverse proxy.
+:80 {
+  respond /healthz 200
+  handle /readyz {
+    rewrite * /health
+    reverse_proxy policy_gateway:8081
+  }
+  handle /v1/webhooks/meta/whatsapp* {
+    reverse_proxy whatsapp_adapter:8086
+  }
+  handle /v1/webhooks/vicidial* {
+    reverse_proxy voice_adapter:8085
+  }
+  handle /v1/webhooks/atlantis-neobot* {
+    reverse_proxy voice_adapter:8085
+  }
+  respond 404
+}

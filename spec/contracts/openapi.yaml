@@ -1,0 +1,447 @@
+openapi: 3.1.0
+info:
+  title: Atlantis Autonomous Sales Control API
+  version: 0.2.0
+  description: >-
+    Plano de control. Los modelos proponen; Policy Gateway y los humanos autorizan.
+    Ninguna API de canal acepta una acción sin autorización ligada al intento exacto.
+servers:
+  - url: https://control.internal.example/v1
+security:
+  - oauth2: [sales]
+paths:
+  /campaigns/{campaignId}/versions/{versionId}/submit:
+    post:
+      operationId: submitCampaignVersion
+      parameters:
+        - $ref: '#/components/parameters/CampaignId'
+        - $ref: '#/components/parameters/VersionId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '202':
+          description: Validación y solicitud de aprobación creadas
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/HumanAction'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        default: {$ref: '#/components/responses/Error'}
+  /campaigns/{campaignId}/versions/{versionId}/approve:
+    post:
+      operationId: approveCampaignVersion
+      security: [{oauth2: ['campaign:approve']}]
+      parameters:
+        - $ref: '#/components/parameters/CampaignId'
+        - $ref: '#/components/parameters/VersionId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ApprovalDecision'}
+      responses:
+        '200':
+          description: Decisión persistida
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ApprovalRecord'}
+        '403': {$ref: '#/components/responses/PolicyDenied'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        default: {$ref: '#/components/responses/Error'}
+  /campaigns/{campaignId}/versions/{versionId}/activate:
+    post:
+      operationId: activateCampaignVersion
+      security: [{oauth2: ['campaign:activate']}]
+      parameters:
+        - $ref: '#/components/parameters/CampaignId'
+        - $ref: '#/components/parameters/VersionId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [artifact_hash]
+              properties:
+                artifact_hash: {$ref: '#/components/schemas/Sha256'}
+      responses:
+        '202': {description: Activación aceptada}
+        '403': {$ref: '#/components/responses/PolicyDenied'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        default: {$ref: '#/components/responses/Error'}
+  /contactability/decisions:
+    post:
+      operationId: decideContactability
+      security: [{workload: ['policy:decide']}]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ActionIntent'}
+      responses:
+        '200':
+          description: Decisión determinista justo a tiempo
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ContactabilityDecision'}
+        default: {$ref: '#/components/responses/Error'}
+  /outbound-authorizations:
+    post:
+      operationId: createOutboundAuthorization
+      security: [{workload: ['policy:authorize']}]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/OutboundAuthorizationRequest'}
+      responses:
+        '201':
+          description: Token JIT de uso único ligado a la decisión y audiencia
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OutboundAuthorization'}
+        '400': {$ref: '#/components/responses/Error'}
+        '403': {$ref: '#/components/responses/PolicyDenied'}
+        '404': {$ref: '#/components/responses/Error'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        default: {$ref: '#/components/responses/Error'}
+  /voice/calls:
+    post:
+      operationId: createVoiceCall
+      security: [{workload: ['voice:execute']}]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/VoiceCallCommand'}
+      responses:
+        '202':
+          description: Llamada aceptada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DispatchReceipt'}
+        '403': {$ref: '#/components/responses/PolicyDenied'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        default: {$ref: '#/components/responses/Error'}
+  /whatsapp/messages:
+    post:
+      operationId: createWhatsAppMessage
+      security: [{workload: ['whatsapp:execute']}]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/WhatsAppMessageCommand'}
+      responses:
+        '202':
+          description: Mensaje aceptado
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DispatchReceipt'}
+        '403': {$ref: '#/components/responses/PolicyDenied'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        default: {$ref: '#/components/responses/Error'}
+  /suppressions:
+    post:
+      operationId: createSuppression
+      security: [{oauth2: ['suppression:write']}]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SuppressionRequest'}
+      responses:
+        '201': {description: Supresión registrada y propagación iniciada}
+        '403': {description: Las supresiones GLOBAL requieren el rol administrativo separado}
+        default: {$ref: '#/components/responses/Error'}
+  /human-actions/{humanActionId}/decide:
+    post:
+      operationId: decideHumanAction
+      security: [{oauth2: ['human-action:decide']}]
+      parameters:
+        - name: humanActionId
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/HumanActionDecision'}
+      responses:
+        '200': {description: Decisión aplicada; el run será revalidado antes de reanudarse}
+        '403': {$ref: '#/components/responses/PolicyDenied'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        default: {$ref: '#/components/responses/Error'}
+  /webhooks/meta/whatsapp:
+    get:
+      operationId: verifyMetaWhatsAppWebhook
+      security: []
+      parameters:
+        - {name: hub.mode, in: query, required: true, schema: {type: string}}
+        - {name: hub.verify_token, in: query, required: true, schema: {type: string}}
+        - {name: hub.challenge, in: query, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Challenge verificado}
+        '403': {$ref: '#/components/responses/PolicyDenied'}
+    post:
+      operationId: ingestMetaWhatsAppWebhook
+      security: []
+      parameters:
+        - name: X-Hub-Signature-256
+          in: header
+          required: true
+          schema: {type: string, pattern: '^sha256=[a-f0-9]{64}$'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        '202': {description: Firma validada sobre cuerpo crudo; evento persistido y deduplicado}
+        '401': {$ref: '#/components/responses/UnauthorizedWebhook'}
+  /webhooks/{provider}:
+    post:
+      operationId: ingestProviderWebhook
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema: {enum: [vicidial, atlantis-neobot, evolution, marketia]}
+        - name: X-Webhook-Signature
+          in: header
+          required: true
+          schema: {type: string}
+        - name: X-Webhook-Timestamp
+          in: header
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        '202': {description: Verificado, persistido y deduplicado}
+        '401': {$ref: '#/components/responses/UnauthorizedWebhook'}
+components:
+  parameters:
+    CampaignId:
+      name: campaignId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    VersionId:
+      name: versionId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: {type: string, minLength: 16, maxLength: 128}
+  schemas:
+    Sha256:
+      type: string
+      pattern: '^[a-f0-9]{64}$'
+    OutboundAuthorizationRequest:
+      type: object
+      additionalProperties: false
+      required: [tenant_id, decision_id, audience]
+      properties:
+        tenant_id: {type: string, format: uuid}
+        decision_id: {type: string, format: uuid}
+        audience: {type: string, minLength: 1, maxLength: 128}
+        ttl_seconds: {type: integer, minimum: 1, maximum: 300, default: 120}
+    OutboundAuthorization:
+      type: object
+      additionalProperties: false
+      required: [token, decision_id]
+      properties:
+        token: {type: string, minLength: 32}
+        decision_id: {type: string, format: uuid}
+    ApprovalDecision:
+      type: object
+      additionalProperties: false
+      required: [artifact_hash, decision]
+      properties:
+        artifact_hash: {$ref: '#/components/schemas/Sha256'}
+        decision: {enum: [APPROVE, REJECT]}
+        comment: {type: string, maxLength: 2000}
+    ApprovalRecord:
+      type: object
+      required: [approval_id, campaign_version_id, artifact_hash, decision, decided_at]
+      properties:
+        approval_id: {type: string, format: uuid}
+        campaign_version_id: {type: string, format: uuid}
+        artifact_hash: {$ref: '#/components/schemas/Sha256'}
+        decision: {enum: [APPROVE, REJECT]}
+        decided_at: {type: string, format: date-time}
+    ActionIntent:
+      type: object
+      additionalProperties: false
+      required: [tenant_id, contact_id, campaign_version_id, purpose, channel, content_hash, requested_at]
+      properties:
+        tenant_id: {type: string, format: uuid}
+        contact_id: {type: string, format: uuid}
+        campaign_version_id: {type: string, format: uuid}
+        purpose: {enum: [MARKETING, SALES, SERVICE, TRANSACTIONAL]}
+        channel: {enum: [VOICE, WHATSAPP]}
+        content_hash: {$ref: '#/components/schemas/Sha256'}
+        workflow_version: {type: string, minLength: 1}
+        requested_at: {type: string, format: date-time}
+    ContactabilityDecision:
+      type: object
+      required: [decision_id, action_intent_id, result, policy_version, evaluated_rules, expires_at]
+      properties:
+        decision_id: {type: string, format: uuid}
+        action_intent_id: {type: string, format: uuid}
+        result: {enum: [ALLOW, DENY, REVIEW]}
+        reason_codes: {type: array, items: {type: string}}
+        policy_version: {type: string}
+        evaluated_rules: {type: array, items: {type: string}}
+        evidence_ids: {type: array, items: {type: string, format: uuid}}
+        authorization_token: {type: [string, 'null']}
+        expires_at: {type: string, format: date-time}
+    VoiceCallCommand:
+      type: object
+      additionalProperties: false
+      required: [action_intent_id, authorization_token, tenant_id, contact_id, campaign_version_id, provider, script_hash]
+      properties:
+        action_intent_id: {type: string, format: uuid}
+        authorization_token: {type: string, minLength: 32}
+        tenant_id: {type: string, format: uuid}
+        contact_id: {type: string, format: uuid}
+        campaign_version_id: {type: string, format: uuid}
+        provider: {enum: [VICIDIAL, ATLANTIS_NEOBOT]}
+        script_hash: {$ref: '#/components/schemas/Sha256'}
+    WhatsAppMessageCommand:
+      type: object
+      additionalProperties: false
+      required: [action_intent_id, authorization_token, tenant_id, contact_id, campaign_version_id, kind, content_hash]
+      properties:
+        action_intent_id: {type: string, format: uuid}
+        authorization_token: {type: string, minLength: 32}
+        tenant_id: {type: string, format: uuid}
+        contact_id: {type: string, format: uuid}
+        campaign_version_id: {type: string, format: uuid}
+        kind: {enum: [TEMPLATE, SESSION]}
+        content_hash: {$ref: '#/components/schemas/Sha256'}
+        template_name: {type: string}
+        language: {type: string}
+        variables: {type: object, additionalProperties: {type: string}}
+        text: {type: string, maxLength: 4096}
+      allOf:
+        - if:
+            properties: {kind: {const: TEMPLATE}}
+          then:
+            required: [template_name, language]
+        - if:
+            properties: {kind: {const: SESSION}}
+          then:
+            required: [text]
+    SuppressionRequest:
+      type: object
+      additionalProperties: false
+      required: [tenant_id, contact_id, scope, reason, effective_at]
+      properties:
+        tenant_id: {type: string, format: uuid}
+        contact_id: {type: string, format: uuid}
+        scope: {enum: [TENANT, CHANNEL, PURPOSE]}
+        channel: {enum: [VOICE, WHATSAPP]}
+        purpose: {type: string}
+        reason: {type: string, maxLength: 500}
+        effective_at: {type: string, format: date-time}
+    HumanAction:
+      type: object
+      required: [human_action_id, subject_type, subject_id, required_role, status, expires_at]
+      properties:
+        human_action_id: {type: string, format: uuid}
+        subject_type: {type: string}
+        subject_id: {type: string, format: uuid}
+        required_role: {type: string}
+        status: {enum: [PENDING, APPROVED, REJECTED, EXPIRED, CANCELLED]}
+        expires_at: {type: string, format: date-time}
+    HumanActionDecision:
+      type: object
+      additionalProperties: false
+      required: [tenant_id, decision, subject_hash]
+      properties:
+        tenant_id: {type: string, format: uuid}
+        decision: {enum: [APPROVE, REJECT]}
+        subject_hash: {$ref: '#/components/schemas/Sha256'}
+        comment: {type: string, maxLength: 2000}
+    DispatchReceipt:
+      type: object
+      required: [interaction_id, provider, accepted_at]
+      properties:
+        interaction_id: {type: string, format: uuid}
+        provider: {type: string}
+        provider_ref: {type: [string, 'null']}
+        accepted_at: {type: string, format: date-time}
+    Error:
+      type: object
+      required: [code, message, correlation_id]
+      properties:
+        code: {type: string}
+        message: {type: string}
+        correlation_id: {type: string, format: uuid}
+        details: {type: object, additionalProperties: true}
+  responses:
+    Error:
+      description: Error
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Error'}
+    Conflict:
+      description: Recurso inmutable, versión obsoleta o clave idempotente con otro payload
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Error'}
+    PolicyDenied:
+      description: Rol, política, evidencia o segregación de funciones insuficiente
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Error'}
+    UnauthorizedWebhook:
+      description: Firma, origen, cuenta o ventana temporal inválida
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Error'}
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://identity.example/authorize
+          tokenUrl: https://identity.example/token
+          scopes:
+            sales: Operación comercial
+            campaign:approve: Aprobar campaña
+            campaign:activate: Activar campaña
+            suppression:write: Registrar una supresión
+            human-action:decide: Resolver una acción humana
+    workload:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://identity.example/token
+          scopes:
+            policy:decide: Solicitar decisión
+            policy:authorize: Emitir autorización JIT para una decisión permitida
+            voice:execute: Ejecutar voz
+            whatsapp:execute: Ejecutar WhatsApp

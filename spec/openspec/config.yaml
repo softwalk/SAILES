@@ -1,0 +1,18 @@
+schema: spec-driven
+context: |
+  Plataforma multi-tenant de prospección y ventas asistidas por IA para México.
+  Toda acción saliente debe pasar por Policy & Compliance Gateway.
+  REPEP se aplica mediante snapshot autorizado de forma obligatoria a llamadas publicitarias; WhatsApp exige opt-in y Cloud API oficial.
+  Los modelos no tienen acceso directo a adaptadores de canal ni a secretos.
+rules:
+  proposal:
+    - Incluir impacto regulatorio, privacidad, licencias y métricas de negocio.
+  specs:
+    - Usar SHALL/MUST para requisitos normativos.
+    - Cada requisito debe tener al menos un escenario verificable.
+    - Incluir escenarios negativos y fail-closed para acciones salientes.
+    - Mantener requisitos de orquestación, supply chain, privacidad y canales como capacidades verificables.
+  design:
+    - Documentar límites de confianza, idempotencia y decisiones de datos.
+  tasks:
+    - Cada bloque termina con pruebas y evidencia de aceptación.

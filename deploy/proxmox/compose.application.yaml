@@ -1,0 +1,207 @@
+name: atlantis-application
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  env_file: /opt/atlantis/infrastructure/.env
+  read_only: true
+  tmpfs: [/tmp]
+  # Los contenedores corren como uid 10001. El kit deja los secretos 0400,
+  # propiedad de uid 10001, y cada servicio sólo monta los que necesita.
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  pids_limit: 128
+  environment: &security-env
+    ATLANTIS_ENV: production
+    ATLANTIS_BIND_HOST: 0.0.0.0
+    ATLANTIS_REQUIRE_WORKLOAD_AUTH: "true"
+    ATLANTIS_REQUIRE_DURABLE_STATE: "true"
+    ATLANTIS_WORKLOAD_SECRETS_FILE: /run/secrets/workload_secrets
+  healthcheck:
+    test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:' + '$${PORT}' + '/health', timeout=3)\""]
+    interval: 15s
+    timeout: 5s
+    retries: 4
+    start_period: 20s
+  logging:
+    driver: json-file
+    options: {max-size: 10m, max-file: "3"}
+
+x-python-build: &python-build
+  context: /opt/atlantis/repositories/atlantis-sales-platform
+  args:
+    PYTHON_BASE_IMAGE: ${PYTHON_BASE_IMAGE:?immutable Python image required}
+
+x-database-env: &database-env
+  ATLANTIS_DATABASE_HOST: postgres
+  ATLANTIS_DATABASE_PORT: "5432"
+  ATLANTIS_DATABASE_NAME: atlantis
+  ATLANTIS_DATABASE_USER: atlantis_runtime
+  ATLANTIS_DATABASE_PASSWORD_FILE: /run/secrets/postgres_runtime_password
+  ATLANTIS_DATABASE_SSLMODE: ${ATLANTIS_DATABASE_SSLMODE:-verify-full}
+  ATLANTIS_DATABASE_SSLROOTCERT: /run/secrets/postgres_ca
+
+services:
+  policy_gateway:
+    <<: *service-defaults
+    image: atlantis-policy-gateway:${ATLANTIS_RELEASE_TAG:-0.9.0-rc4}
+    build: {<<: *python-build, dockerfile: services/policy_gateway/Dockerfile}
+    environment:
+      <<: [*security-env, *database-env]
+      PORT: "8081"
+      ATLANTIS_SHADOW_MODE: ${ATLANTIS_SHADOW_MODE:-true}
+      ATLANTIS_JIT_SECRET_FILE: /run/secrets/jit_secret
+      # Excepción exclusiva de shadow para validar la cadena completa. En piloto,
+      # sustituir por https://crm_api:8082 y eliminar ATLANTIS_SHADOW_HTTP_ALLOWLIST.
+      ATLANTIS_CRM_EVIDENCE_URL: ${ATLANTIS_CRM_EVIDENCE_URL:-http://crm_api:8082}
+      ATLANTIS_SHADOW_HTTP_ALLOWLIST: ${ATLANTIS_SHADOW_HTTP_ALLOWLIST:-crm_api}
+      ATLANTIS_EVIDENCE_WORKLOAD_SECRET_FILE: /run/secrets/evidence_workload_secret
+      ATLANTIS_INTERNAL_CA_FILE: /run/secrets/internal_ca
+      ATLANTIS_INTERNAL_CLIENT_CERT_FILE: /run/secrets/policy_client_cert
+      ATLANTIS_INTERNAL_CLIENT_KEY_FILE: /run/secrets/policy_client_key
+      ATLANTIS_DECISION_MAX_AGE_SECONDS: "120"
+    secrets: [postgres_runtime_password, postgres_ca, workload_secrets, jit_secret, evidence_workload_secret, internal_ca, policy_client_cert, policy_client_key]
+    ports: ["127.0.0.1:8081:8081"]
+    networks: [control, data]
+    mem_limit: 192m
+    cpus: 0.40
+
+  crm_api:
+    <<: *service-defaults
+    image: atlantis-crm-api:${ATLANTIS_RELEASE_TAG:-0.9.0-rc4}
+    build: {<<: *python-build, dockerfile: services/crm_api/Dockerfile}
+    environment:
+      <<: [*security-env, *database-env]
+      PORT: "8082"
+      ATLANTIS_SHADOW_MODE: ${ATLANTIS_SHADOW_MODE:-true}
+      ATLANTIS_CRM_STORAGE: ${ATLANTIS_CRM_STORAGE:-postgres}
+    secrets: [postgres_runtime_password, postgres_ca, workload_secrets]
+    ports: ["127.0.0.1:8082:8082"]
+    networks: [control, data]
+    mem_limit: 256m
+    cpus: 0.50
+
+  orchestrator:
+    <<: *service-defaults
+    image: atlantis-orchestrator:${ATLANTIS_RELEASE_TAG:-0.9.0-rc4}
+    build: {<<: *python-build, dockerfile: services/orchestrator/Dockerfile}
+    environment:
+      <<: [*security-env, *database-env]
+      PORT: "8083"
+      ATLANTIS_SHADOW_MODE: ${ATLANTIS_SHADOW_MODE:-true}
+      ATLANTIS_AMQP_URL_FILE: /run/secrets/amqp_url
+    secrets: [postgres_runtime_password, postgres_ca, workload_secrets, amqp_url]
+    ports: ["127.0.0.1:8083:8083"]
+    networks: [control, data]
+    mem_limit: 256m
+    cpus: 0.60
+
+  model_gateway:
+    <<: *service-defaults
+    image: atlantis-model-gateway:${ATLANTIS_RELEASE_TAG:-0.9.0-rc4}
+    build: {<<: *python-build, dockerfile: services/model_gateway/Dockerfile}
+    environment:
+      <<: [*security-env, *database-env]
+      PORT: "8084"
+      KIMI_BASE_URL: ${KIMI_BASE_URL:-http://litellm:4000/v1}
+      KIMI_MODEL_ID: ${KIMI_MODEL_ID:-UNSET}
+      KIMI_API_KEY_FILE: /run/secrets/kimi_litellm_key
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-http://litellm:4000/v1}
+      DEEPSEEK_MODEL_ID: ${DEEPSEEK_MODEL_ID:-UNSET}
+      DEEPSEEK_API_KEY_FILE: /run/secrets/deepseek_litellm_key
+    secrets: [postgres_runtime_password, postgres_ca, workload_secrets, kimi_litellm_key, deepseek_litellm_key]
+    ports: ["127.0.0.1:8084:8084"]
+    networks: [control, data]
+    mem_limit: 192m
+    cpus: 0.40
+
+  voice_adapter:
+    <<: *service-defaults
+    image: atlantis-voice-adapter:${ATLANTIS_RELEASE_TAG:-0.9.0-rc4}
+    build: {<<: *python-build, dockerfile: services/channel_adapters/Dockerfile}
+    environment:
+      <<: [*security-env, *database-env]
+      ADAPTER_MODE: voice
+      PORT: "8085"
+      ATLANTIS_SHADOW_MODE: ${ATLANTIS_SHADOW_MODE:-true}
+      ATLANTIS_JIT_SECRET_FILE: /run/secrets/jit_secret
+      VICIDIAL_API_PASSWORD_FILE: /run/secrets/vicidial_api_password
+      NEOBOT_API_TOKEN_FILE: /run/secrets/neobot_api_token
+      VICIDIAL_WEBHOOK_SECRET_FILE: /run/secrets/vicidial_webhook_secret
+      ATLANTIS_NEOBOT_WEBHOOK_SECRET_FILE: /run/secrets/neobot_webhook_secret
+    secrets: [postgres_runtime_password, postgres_ca, workload_secrets, jit_secret, vicidial_api_password, neobot_api_token, vicidial_webhook_secret, neobot_webhook_secret]
+    ports: ["127.0.0.1:8085:8085"]
+    networks: [control, data, channels]
+    mem_limit: 192m
+    cpus: 0.40
+
+  whatsapp_adapter:
+    <<: *service-defaults
+    image: atlantis-whatsapp-adapter:${ATLANTIS_RELEASE_TAG:-0.9.0-rc4}
+    build: {<<: *python-build, dockerfile: services/channel_adapters/Dockerfile}
+    environment:
+      <<: [*security-env, *database-env]
+      ADAPTER_MODE: whatsapp
+      PORT: "8086"
+      ATLANTIS_SHADOW_MODE: ${ATLANTIS_SHADOW_MODE:-true}
+      ATLANTIS_JIT_SECRET_FILE: /run/secrets/jit_secret
+      META_ACCESS_TOKEN_FILE: /run/secrets/meta_access_token
+      META_APP_SECRET_FILE: /run/secrets/meta_app_secret
+      META_WEBHOOK_VERIFY_TOKEN_FILE: /run/secrets/meta_webhook_verify_token
+    secrets: [postgres_runtime_password, postgres_ca, workload_secrets, jit_secret, meta_access_token, meta_app_secret, meta_webhook_verify_token]
+    ports: ["127.0.0.1:8086:8086"]
+    networks: [control, data, channels]
+    mem_limit: 192m
+    cpus: 0.40
+
+  marketia_adapter:
+    <<: *service-defaults
+    image: atlantis-marketia-adapter:${ATLANTIS_RELEASE_TAG:-0.9.0-rc4}
+    build: {<<: *python-build, dockerfile: services/channel_adapters/Dockerfile}
+    environment:
+      <<: [*security-env, *database-env]
+      ADAPTER_MODE: marketia
+      PORT: "8087"
+      ATLANTIS_SHADOW_MODE: ${ATLANTIS_SHADOW_MODE:-true}
+      # Marketia no emite contacto saliente: no requiere token JIT. El .env global
+      # define ATLANTIS_JIT_SECRET_FILE, pero este servicio no monta jit_secret;
+      # se anula para evitar FileNotFoundError en el arranque (fix local VM110).
+      ATLANTIS_JIT_SECRET_FILE: ""
+      MARKETIA_API_TOKEN_FILE: /run/secrets/marketia_api_token
+      MARKETIA_WEBHOOK_SECRET_FILE: /run/secrets/marketia_webhook_secret
+    secrets: [postgres_runtime_password, postgres_ca, workload_secrets, marketia_api_token, marketia_webhook_secret]
+    ports: ["127.0.0.1:8087:8087"]
+    networks: [control, data, channels]
+    mem_limit: 192m
+    cpus: 0.40
+
+secrets:
+  postgres_runtime_password: {file: /opt/atlantis/secrets/postgres_runtime_password.txt}
+  postgres_ca: {file: /opt/atlantis/secrets/postgres_ca.crt}
+  workload_secrets: {file: /opt/atlantis/secrets/workload_secrets.json}
+  jit_secret: {file: /opt/atlantis/secrets/jit_secret.txt}
+  evidence_workload_secret: {file: /opt/atlantis/secrets/evidence_workload_secret.txt}
+  internal_ca: {file: /opt/atlantis/secrets/internal_ca.crt}
+  policy_client_cert: {file: /opt/atlantis/secrets/policy_client.crt}
+  policy_client_key: {file: /opt/atlantis/secrets/policy_client.key}
+  kimi_litellm_key: {file: /opt/atlantis/secrets/kimi_litellm_key.txt}
+  deepseek_litellm_key: {file: /opt/atlantis/secrets/deepseek_litellm_key.txt}
+  amqp_url: {file: /opt/atlantis/secrets/amqp_url.txt}
+  meta_access_token: {file: /opt/atlantis/secrets/meta_access_token.txt}
+  meta_app_secret: {file: /opt/atlantis/secrets/meta_app_secret.txt}
+  meta_webhook_verify_token: {file: /opt/atlantis/secrets/meta_webhook_verify_token.txt}
+  vicidial_api_password: {file: /opt/atlantis/secrets/vicidial_api_password.txt}
+  vicidial_webhook_secret: {file: /opt/atlantis/secrets/vicidial_webhook_secret.txt}
+  neobot_api_token: {file: /opt/atlantis/secrets/neobot_api_token.txt}
+  neobot_webhook_secret: {file: /opt/atlantis/secrets/neobot_webhook_secret.txt}
+  marketia_api_token: {file: /opt/atlantis/secrets/marketia_api_token.txt}
+  marketia_webhook_secret: {file: /opt/atlantis/secrets/marketia_webhook_secret.txt}
+
+networks:
+  control:
+    external: true
+    name: atlantis-platform_atlantis-control
+  data:
+    external: true
+    name: atlantis-platform_atlantis-data
+  channels:
+    name: atlantis-application_channels

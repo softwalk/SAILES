@@ -1,0 +1,152 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:bb5d8c91-e1e4-4c7c-a41e-f7921defeac1",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-08-23T04:16:37.927501+00:00",
+    "component": {
+      "type": "application",
+      "name": "atlantis-autonomous-sales",
+      "version": "0.9.0-rc4"
+    }
+  },
+  "components": [
+    {
+      "type": "application",
+      "name": "agent_adapters",
+      "version": "0.9.0-rc4",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "546e31ec6ad7929c4f292e4cddaf74d6c5c73b2af62ea5e0d75ef57670015fce"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "LicenseRef-Proprietary-Atlantis"
+          }
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "name": "channel_adapters",
+      "version": "0.9.0-rc4",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d1bcedab1f3b26ef91531b5ccbf5cfbe8178a2a7621176fe5ff702464b237fa8"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "LicenseRef-Proprietary-Atlantis"
+          }
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "name": "crm_api",
+      "version": "0.9.0-rc4",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f5580b30ef93f9c4ed21bd64910e5af792d57e3d4e3849d620fe0e795bc85dda"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "LicenseRef-Proprietary-Atlantis"
+          }
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "name": "model_gateway",
+      "version": "0.9.0-rc4",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "7ed11ab6fd4b4cc7b039c73bef1272d171f89cf822f9cd05e8e4b193d1cca233"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "LicenseRef-Proprietary-Atlantis"
+          }
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "name": "orchestrator",
+      "version": "0.9.0-rc4",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "079e3cfde44d76c039af5da40d7355581559617bc7e0aba0b93d30cd94591218"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "LicenseRef-Proprietary-Atlantis"
+          }
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "name": "policy_gateway",
+      "version": "0.9.0-rc4",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "13c7bc7adee7b70b2a418d4b15c49919d21033fcf5febe14b4920d07991f1644"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "LicenseRef-Proprietary-Atlantis"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "atlantis-contracts",
+      "version": "0.9.0-rc4",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "57c79664f5de4e1329ae277acf4cd6986830baac035dc618a7ffe2df81742872"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "LicenseRef-Proprietary-Atlantis"
+          }
+        }
+      ]
+    }
+  ],
+  "properties": [
+    {
+      "name": "atlantis:scope",
+      "value": "first-party-source-only"
+    },
+    {
+      "name": "atlantis:distribution-status",
+      "value": "blocked-pending-third-party-lock"
+    }
+  ]
+}

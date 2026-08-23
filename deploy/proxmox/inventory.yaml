@@ -1,0 +1,46 @@
+schema_version: 1
+source: INFORME_INFRAESTRUCTURA_INSTALADA_ATLANTIS_PROXMOX.docx
+verified_at: "2026-08-22"
+hypervisor:
+  name: proxmox-ve
+  management_ip: 192.168.100.154
+  bridge: vmbr0
+  lan_cidr: 192.168.100.0/24
+  gateway: 192.168.100.1
+  storage:
+    iso_pool: local
+    vm_pool: local-lvm
+nodes:
+  - vmid: 110
+    name: atlantis-core
+    role: application
+    ip: 192.168.100.160
+    vcpu: 4
+    ram_mib: 8192
+    minimum_effective_ram_mib: 7168
+    capacity_note: balloon/host pressure must not reduce effective RAM below minimum
+    disk_gib: 60
+    root: /opt/atlantis
+  - vmid: 102
+    name: hermes-core-os
+    role: subordinate-research-executor
+    ip: 192.168.100.155
+    vcpu: 4
+    ram_mib: 8192
+    disk_gib: 60
+    mutation_policy: do-not-modify-from-this-release
+protected_existing_guests:
+  - {vmid: 100, name: homeassistant}
+  - {vmid: 101, name: RoonServer}
+  - {vmid: 103, name: Hermes-Solo}
+  - {vmid: 210, name: openclaw-sandbox}
+external_docker_networks:
+  control: atlantis-platform_atlantis-control
+  data: atlantis-platform_atlantis-data
+  observability: atlantis-observability_atlantis-obs
+security_baseline:
+  public_ingress_ports: [80, 443]
+  loopback_only_ports: [4000, 4317, 4318, 5432, 6379, 8081, 8082, 8083, 8084, 8085, 8086, 8087]
+  admin_lan_ports: [1880, 3001, 9090, 15672]
+  shadow_mode_required: true
+  prohibit_client_vm_export_until_distribution_gate: true
