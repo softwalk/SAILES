@@ -33,7 +33,7 @@ AS $function$
      WHERE has_table_privilege('atlantis_suppression_admin','public.suppression',privilege_type)
     UNION ALL
     SELECT 'POLICY:' || pol.polname || ':' || coalesce(pg_get_expr(pol.polqual,pol.polrelid),'') || ':' ||
-           coalesce(pg_get_expr(pol.polwithcheck,pol.polrelid),'') || ':' || pol.polcmd
+           coalesce(pg_get_expr(pol.polwithcheck,pol.polrelid),'') || ':' || pol.polcmd::text
       FROM pg_policy pol
      WHERE pol.polrelid='public.suppression'::regclass
     UNION ALL
