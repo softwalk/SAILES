@@ -1,15 +1,12 @@
 release_status: blocked
 target: production-and-client-distribution
 last_verified: '2026-08-23'
-deployment_state: 'RC 0.9.0-rc4 procedente del ZIP v6 está desplegado en VM 110 (192.168.100.160),
-  en modo SHADOW y con 7 servicios propietarios saludables en 127.0.0.1:8081-8087.
-  La evidencia operativa confirma CRM PostgreSQL, migración 004 aplicada con el checksum
-  heredado y 62/62 pruebas de esa entrega. También confirma PostgreSQL de desarrollo
-  sin TLS, sólo ~1.78 GiB efectivos y sin swap. El candidato ZIP v7 pasa 65/65 localmente,
-  pero todavía no está desplegado. Distribución y piloto siguen bloqueados por las
-  evidencias externas y de infraestructura siguientes.
-
-  '
+deployment_state: 'Source-3 (ZIP v7) desplegado en VM 110 en modo SHADOW. 7 servicios
+  propietarios healthy en 127.0.0.1:8081-8087. Migración 005 OFICIAL aplicada (trigger
+  append-only, fingerprint 53e77f49). Git commit inmutable 5b74324 en github.com/softwalk/SAILES.
+  8 digests OCI ligados al despliegue real (tags atlantis-*:0.9.0-rc4). 65/65 tests
+  PASS. Preflight oficial bloquea solo en: TLS (ssl off), RAM host (<7 GiB), proveedor
+  de modelos (EXT-006), y ownership/TLS relacionados.'
 candidate_state: 'RC 0.9.0-rc4 ZIP v7 construido como fuente revisable; corrige RLS
   GLOBAL, durabilidad/TTL, decisiones one-shot, autenticación workload, HTTP/TLS y
   lock con hashes. Añade reconciliación 005 auditada y pilot gate técnico. Suite local
@@ -187,9 +184,10 @@ notes:
 - id: Source3-001
   severity: info
   note: 'Source-3 (ZIP v7) desplegado en VM110 shadow. Migración 005 OFICIAL aplicada:
-    tabla schema_migration_reconciliation con trigger append-only, funciones migration_004_object_fingerprint
-    + prevent_mutation, fingerprint oficial 53e77f49 (recalculado == almacenado),
-    evidence_sha256 registrado. 004 histórico 9c1850 intacto. 65/65 tests PASS. Preflight
-    oficial instalado (psql). Bloqueos restantes: TLS PostgreSQL (ssl off -> verify-full
-    requerido por el gate), RAM host, Git commit, digests evidence, model providers,
-    ownership/mode del .env.'
+    trigger append-only, funciones migration_004_object_fingerprint + prevent_mutation,
+    fingerprint oficial 53e77f49 (recalculado == almacenado), evidence_sha256 registrado.
+    004 histórico 9c1850 intacto. Git commit 5b74324 en github.com/softwalk/SAILES
+    (resuelto). 8 digests OCI ligados al despliegue real (tags atlantis-*:0.9.0-rc4,
+    corregidos tras dictamen). 65/65 tests PASS. Bloqueos restantes: TLS PostgreSQL
+    (ssl off -> verify-full), RAM host (<7 GiB), proveedor de modelos (EXT-006). No
+    se configuró provider placeholder (integridad).'
