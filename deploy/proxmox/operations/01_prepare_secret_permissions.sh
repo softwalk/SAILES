@@ -8,7 +8,7 @@ require_directory "$ATLANTIS_SECRET_DIR"
 required=(
   postgres_runtime_password.txt postgres_migrator_password.txt postgres_ca.crt
   workload_secrets.json jit_secret.txt evidence_workload_secret.txt
-  kimi_litellm_key.txt deepseek_litellm_key.txt amqp_url.txt
+  openrouter_api_key.txt kimi_litellm_key.txt deepseek_litellm_key.txt amqp_url.txt
   internal_ca.crt policy_client.crt policy_client.key
   meta_access_token.txt meta_app_secret.txt meta_webhook_verify_token.txt
   vicidial_api_password.txt vicidial_webhook_secret.txt

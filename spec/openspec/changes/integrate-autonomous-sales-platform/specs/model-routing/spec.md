@@ -3,12 +3,30 @@
 ## ADDED Requirements
 
 ### Requirement: Proveedores intercambiables
-Kimi K3 y DeepSeek SHALL exponerse mediante `ModelGateway`; flujos y prompts SHALL referir alias de capacidad, no IDs de proveedor. El registro SHALL poder cambiar modelos sin migrar estado de campaña, pero cada conversación SHALL fijar proveedor/modelo salvo fallback auditado y cada cambio SHALL pasar evaluaciones y canary.
+OpenRouter, Kimi K3 y DeepSeek SHALL exponerse mediante `ModelGateway`; flujos y prompts SHALL referir alias de capacidad, no IDs de proveedor. El registro SHALL poder cambiar modelos sin migrar estado de campaña, pero cada conversación SHALL fijar proveedor/modelo salvo fallback auditado y cada cambio SHALL pasar evaluaciones y canary.
 
 #### Scenario: Kimi no disponible
 - **GIVEN** una tarea cuyo fallback DeepSeek está permitido
 - **WHEN** el circuit breaker de Kimi abre
 - **THEN** se enruta a DeepSeek, se conserva el schema y se registra motivo, latencia y costo
+
+#### Scenario: OpenRouter configurado
+- **GIVEN** una clave montada como secreto, endpoint oficial e ID exacto de modelo aprobado
+- **WHEN** el Model Gateway carga proveedores
+- **THEN** OpenRouter queda disponible en el orden configurado sin exponer su clave a agentes, logs o adaptadores
+
+### Requirement: Límite de confianza de OpenRouter
+OpenRouter MUST usar `https://openrouter.ai/api/v1`, autenticación Bearer obtenida de un archivo secreto y un ID explícito de modelo. El sistema MUST NOT persistir la clave ni enviarla a un host alternativo. OpenRouter MUST quedar excluido de datos `RESTRICTED` salvo allowlist aprobada.
+
+#### Scenario: Endpoint OpenRouter manipulado
+- **GIVEN** una URL HTTP o un hostname distinto de `openrouter.ai`
+- **WHEN** el proveedor intenta inicializarse
+- **THEN** la configuración se rechaza antes de transmitir la clave
+
+#### Scenario: Datos restringidos sin aprobación
+- **GIVEN** una solicitud `RESTRICTED` y OpenRouter fuera de la allowlist
+- **WHEN** el router selecciona proveedor
+- **THEN** OpenRouter no recibe la solicitud y se usa otro proveedor aprobado o se bloquea de forma segura
 
 ### Requirement: Enrutamiento por política
 La selección SHALL considerar clasificación de datos, región, residencia, retención, uso para entrenamiento, subprocesadores, capacidades, calidad, latencia, presupuesto y salud. Un proveedor no aprobado para cierta clase de datos SHALL quedar excluido.

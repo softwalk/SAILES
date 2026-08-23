@@ -6,7 +6,7 @@ assert_safe_root
 required=(
   postgres_runtime_password.txt postgres_migrator_password.txt postgres_ca.crt
   workload_secrets.json jit_secret.txt evidence_workload_secret.txt
-  kimi_litellm_key.txt deepseek_litellm_key.txt amqp_url.txt
+  openrouter_api_key.txt kimi_litellm_key.txt deepseek_litellm_key.txt amqp_url.txt
   internal_ca.crt policy_client.crt policy_client.key
   meta_access_token.txt meta_app_secret.txt meta_webhook_verify_token.txt
   vicidial_api_password.txt vicidial_webhook_secret.txt
@@ -38,6 +38,12 @@ for name in jit_secret.txt evidence_workload_secret.txt; do
   bytes="$(wc -c < "$ATLANTIS_SECRET_DIR/$name")"
   (( bytes >= 32 )) || { log "FAIL secret shorter than 32 bytes: $name"; fail=1; }
 done
+python3 - "$ATLANTIS_SECRET_DIR/openrouter_api_key.txt" <<'PY' || fail=1
+import sys
+value=open(sys.argv[1], encoding='utf-8').read().strip()
+assert value.startswith('sk-or-v1-') and len(value) >= 40, 'OpenRouter key format invalid'
+print('PASS OpenRouter secret format')
+PY
 openssl verify -CAfile "$ATLANTIS_SECRET_DIR/internal_ca.crt" "$ATLANTIS_SECRET_DIR/policy_client.crt" >/dev/null || { log "FAIL policy client certificate chain"; fail=1; }
 openssl x509 -checkend 2592000 -noout -in "$ATLANTIS_SECRET_DIR/policy_client.crt" >/dev/null || { log "FAIL policy client certificate expires within 30 days"; fail=1; }
 cert_pub="$(openssl x509 -in "$ATLANTIS_SECRET_DIR/policy_client.crt" -pubkey -noout | openssl sha256)"

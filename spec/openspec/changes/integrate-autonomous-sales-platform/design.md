@@ -148,7 +148,7 @@ generate(task_type, messages, response_schema, data_classification,
          quality_tier, latency_budget_ms, max_cost, tenant_policy) -> ModelResult
 ```
 
-El registro de capacidades mantiene alias (`reasoning-premium`, `conversation-balanced`, `classification-low-cost`) separados de IDs de proveedor. Kimi K3 y DeepSeek se configuran por despliegue. La ruta considera residencia/privacidad, términos de tratamiento, JSON/tool calling, latencia, costo, salud y límite. Un circuit breaker abre tras fallos y cambia al proveedor permitido. En una conversación activa el proveedor queda fijado salvo fallback auditado; todo cambio pasa evals y canary. La caché sólo admite contenido no sensible o hash seguro.
+El registro de capacidades mantiene alias (`reasoning-premium`, `conversation-balanced`, `classification-low-cost`) separados de IDs de proveedor. OpenRouter, Kimi K3 y DeepSeek se configuran por despliegue. OpenRouter usa únicamente el endpoint HTTPS oficial, secreto por archivo e ID explícito; no entra en la allowlist `RESTRICTED` por defecto. La ruta considera residencia/privacidad, términos de tratamiento, JSON/tool calling, latencia, costo, salud y límite. Un circuit breaker abre tras fallos y cambia al proveedor permitido. En una conversación activa el proveedor queda fijado salvo fallback auditado; todo cambio pasa evals y canary. La caché sólo admite contenido no sensible o hash seguro.
 
 Todas las salidas de acción se validan contra JSON Schema. Fallo de esquema: una reparación; luego fallback; luego revisión humana. El sistema conserva metadatos, no razonamiento interno del proveedor.
 

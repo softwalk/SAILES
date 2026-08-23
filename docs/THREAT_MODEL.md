@@ -7,7 +7,8 @@
 | Manipulación de campaña | Contenido aprobado | JSON canónico, SHA-256 y re-aprobación material | Prueba UI completa |
 | Replay de contacto | Canal | JIT firmado, TTL, audiencia, claims y consumo SQL atómico | Prueba PostgreSQL/VICIdial real |
 | Repudio | Auditoría | Cadena por tenant, secuencia y verificación de exportación | WORM/KMS/attestation |
-| Exposición de PII | Logs/modelos | Redacción estructurada, tokenización de teléfono y routing restringido | DLP y KMS reales |
+| Exposición de PII | Logs/modelos | Redacción estructurada, tokenización, routing restringido y OpenRouter fuera de `RESTRICTED` por defecto | DLP, DPIA y KMS reales |
+| Robo de clave de modelo | OpenRouter/Kimi/DeepSeek | Secretos montados como archivo, sin valores en `.env`/Git/logs y endpoint OpenRouter HTTPS allowlisted | Vault/KMS y rotación automática |
 | SSRF/redirección | Proveedores | HTTPS y host allowlist; redirects bloqueados | Egress firewall |
 | Elevación de privilegio | Multi-tenant | Tenant en JWT, `SET LOCAL`, RLS `FORCE` en esquema | Test con roles PostgreSQL reales |
 | Prompt injection | Agentes | Fuentes no confiables, outputs limitados, modelos sin herramientas de canal | Suite adversarial con modelos reales |

@@ -96,6 +96,7 @@ Cada tarea se cierra con código, pruebas, observabilidad, documentación y evid
 - [ ] 6.10 Ejecutar evals offline de veracidad, tono, rechazo, handoff y costo.
 - [ ] 6.11 Probar canary, rollback de modelo y fallback dentro de conversación sin pérdida de políticas ni contexto.
 - [ ] 6.12 Eliminar/deshabilitar herramientas de pago, firma y envío heredadas de SalesGPT.
+- [x] 6.13 Integrar OpenRouter mediante endpoint HTTPS allowlisted, secreto por archivo, modelo explícito, orden de fallback y bloqueo `RESTRICTED` por defecto.
 
 ## 7. Canal de voz
 

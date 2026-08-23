@@ -14,7 +14,7 @@ Implementación de referencia del OpenSpec v1.2. El repositorio entrega un relea
 - Tokens HMAC JIT con audiencia, TTL máximo de 5 minutos y consumo único.
 - Campañas versionadas; cualquier cambio material invalida la aprobación.
 - Orquestador determinístico, checkpoints, interrupción humana, outbox e idempotencia.
-- Model Gateway con proveedores Kimi/DeepSeek compatibles con API tipo OpenAI, redacción de PII, fallback y presupuesto.
+- Model Gateway con OpenRouter, Kimi y DeepSeek intercambiables, redacción de PII, fallback y presupuesto. OpenRouter usa exclusivamente `https://openrouter.ai/api/v1`, clave montada como secreto y un ID de modelo explícito.
 - Adaptadores separados: OpenOutreach CLI externo, OpenSales, SalesGPT, voz, WhatsApp y Marketia.
 - CRM/memoria/auditoría con repositorio de desarrollo y esquema PostgreSQL endurecido.
 - Composición de laboratorio y overlay application-only alineado con VM 110 en Proxmox; PostgreSQL y Node-RED permanecen aislados.
@@ -73,7 +73,7 @@ Cada directorio de `services/` representa un artefacto desplegable independiente
 | policy_gateway | HTTP :8081 | Decisión y autorización de contacto |
 | crm_api | HTTP :8082 | CRM, consentimiento, evidencia y auditoría |
 | orchestrator | HTTP :8083 | Estado, aprobaciones, outbox y reintentos |
-| model_gateway | HTTP :8084 | Kimi/DeepSeek, redacción y fallback |
+| model_gateway | HTTP :8084 | OpenRouter/Kimi/DeepSeek, redacción y fallback |
 | voice_adapter | HTTP :8085, shadow | VICIdial/Atlantis-Neobot tras token JIT |
 | whatsapp_adapter | HTTP :8086, shadow | Meta Cloud API y webhooks tras token JIT |
 | marketia_adapter | HTTP :8087 | Sincronización sin autoridad de cumplimiento |
@@ -86,6 +86,7 @@ Cada directorio de `services/` representa un artefacto desplegable independiente
 4. El CRM PostgreSQL es la autoridad. El repositorio en memoria sólo sirve para pruebas.
 5. La imagen base fija versiones y hashes de psycopg, Pika, LangGraph y transitivas; producción requiere además textos de licencia, digests OCI por servicio y attestation final aprobada.
 6. No entregar VM/ISO/plantilla hasta que `tools/compliance_gate.py --mode distribution` pase y existan SBOM, avisos, licencias, fuentes y attestation.
+7. Las claves de proveedores de modelos sólo se montan desde `/run/secrets`; nunca se guardan en `.env`, Git, trazas, prompts o artefactos de soporte. OpenRouter permanece excluido de datos `RESTRICTED` salvo allowlist aprobada por Legal/Privacidad.
 
 ## Estado OpenSpec y cierre
 

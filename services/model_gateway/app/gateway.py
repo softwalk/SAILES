@@ -1,6 +1,7 @@
 import json
 import re
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from typing import Protocol
@@ -51,22 +52,66 @@ class Provider(Protocol):
 
 
 class OpenAICompatibleProvider:
-    def __init__(self, name: str, base_url: str, model_id: str, api_key: str):
+    def __init__(self, name: str, base_url: str, model_id: str, api_key: str,
+                 extra_headers: dict[str, str] | None = None):
         if not model_id or model_id == "UNSET" or not api_key:
             raise ProviderError(f"{name.upper()}_NOT_CONFIGURED")
+        try:
+            parsed = urllib.parse.urlparse(base_url)
+            parsed.port
+        except ValueError as exc:
+            raise ProviderError(f"{name.upper()}_BASE_URL_INVALID") from exc
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+            raise ProviderError(f"{name.upper()}_BASE_URL_INVALID")
+        headers = {}
+        for key, value in (extra_headers or {}).items():
+            if value and "\n" not in value and "\r" not in value:
+                headers[key] = value
         self.name, self.base_url, self.model_id, self.api_key = name, base_url.rstrip("/"), model_id, api_key
+        self.extra_headers = headers
 
     def complete(self, prompt: str) -> tuple[dict, int]:
         payload = json.dumps({"model": self.model_id, "messages": [{"role": "user", "content": prompt}], "response_format": {"type": "json_object"}}).encode()
-        request = urllib.request.Request(self.base_url + "/chat/completions", payload, {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"})
+        headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json", **self.extra_headers}
+        request = urllib.request.Request(self.base_url + "/chat/completions", payload, headers)
         try:
             with urllib.request.urlopen(request, timeout=30) as response:
                 raw = json.load(response)
             content = raw["choices"][0]["message"]["content"]
             usage = raw.get("usage", {})
             return json.loads(content), int(usage.get("total_tokens", 0))
-        except (urllib.error.URLError, KeyError, ValueError, json.JSONDecodeError) as exc:
+        except (urllib.error.URLError, TimeoutError, KeyError, ValueError, json.JSONDecodeError) as exc:
             raise ProviderError(f"{self.name.upper()}_FAILURE") from exc
+
+
+class OpenRouterProvider(OpenAICompatibleProvider):
+    """OpenRouter adapter with a fixed TLS trust boundary and optional attribution."""
+
+    allowed_hostname = "openrouter.ai"
+
+    def __init__(self, model_id: str, api_key: str,
+                 base_url: str = "https://openrouter.ai/api/v1",
+                 http_referer: str = "", app_title: str = ""):
+        try:
+            parsed = urllib.parse.urlparse(base_url)
+            port = parsed.port
+        except ValueError as exc:
+            raise ProviderError("OPENROUTER_BASE_URL_NOT_ALLOWED") from exc
+        if (parsed.scheme != "https" or parsed.hostname != self.allowed_hostname
+                or parsed.username or parsed.password or port
+                or parsed.path.rstrip("/") != "/api/v1" or parsed.query or parsed.fragment):
+            raise ProviderError("OPENROUTER_BASE_URL_NOT_ALLOWED")
+        if model_id.strip().lower() == "openrouter/auto":
+            raise ProviderError("OPENROUTER_MUTABLE_MODEL_NOT_ALLOWED")
+        extra_headers = {}
+        if http_referer:
+            referer = urllib.parse.urlparse(http_referer)
+            if referer.scheme != "https" or not referer.hostname:
+                raise ProviderError("OPENROUTER_HTTP_REFERER_INVALID")
+            extra_headers["HTTP-Referer"] = http_referer
+        if app_title:
+            extra_headers["X-OpenRouter-Title"] = app_title
+        super().__init__("openrouter", base_url, model_id, api_key, extra_headers)
 
 
 class ModelGateway:

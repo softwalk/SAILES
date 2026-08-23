@@ -7,6 +7,8 @@ context: |
   contiene referencia de evidencia jurídica y Policy Gateway valida la excepción;
   B2C requiere snapshot REPEP autorizado y vigente. WhatsApp exige opt-in y Cloud API oficial.
   Los modelos no tienen acceso directo a adaptadores de canal ni a secretos.
+  OpenRouter usa endpoint HTTPS oficial, secreto por archivo, ID de modelo explícito
+  y queda fuera de datos RESTRICTED salvo allowlist aprobada.
 rules:
   proposal:
     - Incluir impacto regulatorio, privacidad, licencias y métricas de negocio.

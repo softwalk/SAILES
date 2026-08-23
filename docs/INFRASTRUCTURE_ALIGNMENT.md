@@ -12,7 +12,7 @@ El código RC2 es desplegable como actualización application-only sobre VM 110,
 | `/opt/atlantis/*` | Rutas absolutas y secretos externos en el overlay Proxmox |
 | Redes control/data existentes | Redes externas con nombres exactos del informe |
 | PostgreSQL en red de datos | DSN construido en memoria desde archivo secreto; usuario runtime separado |
-| LiteLLM en `:4000` | Kimi/DeepSeek se enrutan internamente a LiteLLM con key en archivo secreto |
+| LiteLLM en `:4000` | Kimi/DeepSeek pueden enrutar internamente a LiteLLM; OpenRouter sale sólo a `https://openrouter.ai/api/v1`, todos con clave en archivo secreto |
 | RabbitMQ y Valkey instalados | Se conservan como dependencias externas; el broker no se recrea |
 | Caddy, Node-RED y observabilidad | Se conservan; sólo se aporta fragmento de rutas funcionales, sin UIs administrativas |
 | Hermes VM 102 | Inventariado como ejecutor subordinado no modificable desde esta entrega |

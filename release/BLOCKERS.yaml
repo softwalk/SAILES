@@ -61,7 +61,7 @@ blockers:
 - id: EXT-006
   severity: P0
   status: open
-  note: 'Modelos Kimi/DeepSeek: API keys reales (proveedor de modelos aprobado pendiente).'
+  note: 'Modelos Kimi/DeepSeek/OpenRouter: clave OpenRouter compartida fuera del gestor debe rotarse; modelo exacto, términos, DPIA/transferencia y proveedor aprobado pendientes.'
 - id: EXT-007
   severity: P1
   status: open

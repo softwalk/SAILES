@@ -9,7 +9,7 @@
 - OpenOutreach por CLI externo verificado por digest; OpenSales/SalesGPT sin side effects.
 - Leads con procedencia, allowlist, licencia, deduplicación y scoring explicable.
 - Orquestación versionada, checkpoints, restore, humano, expiración, compensación, retry, circuit breaker, outbox y DLQ.
-- Kimi/DeepSeek intercambiables, redacción, clasificación, presupuesto, salud y fallback.
+- OpenRouter/Kimi/DeepSeek intercambiables, endpoint OpenRouter allowlisted, secretos por archivo, redacción, clasificación, presupuesto, salud y fallback.
 - Transportes HTTPS para Meta Cloud, VICIdial, Atlantis-Neobot y Marketia; SSRF/redirect bloqueados.
 - Webhooks firmados, timestamp, deduplicación y repositorio PostgreSQL.
 - CRM de contactos, campañas, consentimientos, interacciones, oportunidades, memoria y solicitudes ARCO.

@@ -34,6 +34,15 @@ class OperationsKitTests(unittest.TestCase):
         ):
             self.assertIn(f"image: atlantis-{service}:${{ATLANTIS_RELEASE_TAG:-0.9.0-rc4}}", compose)
 
+    def test_openrouter_key_is_a_mounted_secret_not_an_environment_value(self):
+        compose = (ROOT / "deploy/proxmox/compose.application.yaml").read_text()
+        env_example = (ROOT / "deploy/proxmox/.env.proxmox.example").read_text()
+        validation = (OPS / "01_validate_secrets.sh").read_text()
+        self.assertIn("OPENROUTER_API_KEY_FILE: /run/secrets/openrouter_api_key", compose)
+        self.assertIn("openrouter_api_key: {file: /opt/atlantis/secrets/openrouter_api_key.txt}", compose)
+        self.assertNotIn("OPENROUTER_API_KEY=", compose + env_example)
+        self.assertIn("openrouter_api_key.txt", validation)
+
     def test_rollout_keeps_shadow_and_backup_gates(self):
         preflight = (OPS / "00_preflight.sh").read_text()
         migration = (OPS / "20_apply_migration_004.sh").read_text()

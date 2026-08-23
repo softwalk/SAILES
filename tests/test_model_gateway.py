@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from _load import load
 
@@ -30,6 +31,47 @@ class ModelGatewayTests(unittest.TestCase):
         gateway = models.ModelGateway([FakeProvider("kimi", {"ok": True})])
         with self.assertRaisesRegex(models.ProviderError, "NO_APPROVED_PROVIDER"):
             gateway.complete(models.ModelRequest("t1", "x", "secret", data_classification="RESTRICTED"))
+
+    def test_openrouter_uses_tls_endpoint_and_required_headers(self):
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_): return False
+            def read(self):
+                return b'{"choices":[{"message":{"content":"{\\"result\\":\\"ok\\"}"}}],"usage":{"total_tokens":12}}'
+
+        provider = models.OpenRouterProvider(
+            "openai/gpt-test", "test-secret",
+            http_referer="https://sales.example.com", app_title="Atlantis Tests",
+        )
+        with patch.object(models.urllib.request, "urlopen", return_value=Response()) as urlopen:
+            output, cost = provider.complete("hola")
+        request = urlopen.call_args.args[0]
+        headers = {key.lower(): value for key, value in request.header_items()}
+        self.assertEqual(request.full_url, "https://openrouter.ai/api/v1/chat/completions")
+        self.assertEqual(headers["authorization"], "Bearer test-secret")
+        self.assertEqual(headers["http-referer"], "https://sales.example.com")
+        self.assertEqual(headers["x-openrouter-title"], "Atlantis Tests")
+        self.assertEqual((output, cost), ({"result": "ok"}, 12))
+
+    def test_openrouter_rejects_non_official_or_plain_http_endpoint(self):
+        for base_url in (
+            "http://openrouter.ai/api/v1", "https://attacker.example/api/v1",
+            "https://user:password@openrouter.ai/api/v1", "https://openrouter.ai/other",
+            "https://openrouter.ai:not-a-port/api/v1",
+        ):
+            with self.subTest(base_url=base_url), self.assertRaisesRegex(models.ProviderError, "BASE_URL_NOT_ALLOWED"):
+                models.OpenRouterProvider("openai/gpt-test", "test-secret", base_url=base_url)
+
+    def test_openrouter_rejects_mutable_auto_model(self):
+        with self.assertRaisesRegex(models.ProviderError, "MUTABLE_MODEL_NOT_ALLOWED"):
+            models.OpenRouterProvider("openrouter/auto", "test-secret")
+
+    def test_openrouter_never_receives_restricted_data_without_allowlist(self):
+        provider = FakeProvider("openrouter", {"ok": True})
+        gateway = models.ModelGateway([provider])
+        with self.assertRaisesRegex(models.ProviderError, "NO_APPROVED_PROVIDER"):
+            gateway.complete(models.ModelRequest("t1", "x", "secret", data_classification="RESTRICTED"))
+        self.assertFalse(hasattr(provider, "last_prompt"))
 
 
 if __name__ == "__main__": unittest.main()

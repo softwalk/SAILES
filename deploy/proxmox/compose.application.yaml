@@ -102,13 +102,20 @@ services:
     environment:
       <<: [*security-env, *database-env]
       PORT: "8084"
+      ATLANTIS_MODEL_PROVIDER_ORDER: ${ATLANTIS_MODEL_PROVIDER_ORDER:-openrouter,kimi,deepseek}
+      OPENROUTER_BASE_URL: ${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+      OPENROUTER_MODEL_ID: ${OPENROUTER_MODEL_ID:-UNSET}
+      OPENROUTER_API_KEY_FILE: /run/secrets/openrouter_api_key
+      OPENROUTER_HTTP_REFERER: ${OPENROUTER_HTTP_REFERER:-}
+      OPENROUTER_APP_TITLE: ${OPENROUTER_APP_TITLE:-Atlantis Autonomous Sales}
+      RESTRICTED_PROVIDER_ALLOWLIST: ${RESTRICTED_PROVIDER_ALLOWLIST:-}
       KIMI_BASE_URL: ${KIMI_BASE_URL:-http://litellm:4000/v1}
       KIMI_MODEL_ID: ${KIMI_MODEL_ID:-UNSET}
       KIMI_API_KEY_FILE: /run/secrets/kimi_litellm_key
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-http://litellm:4000/v1}
       DEEPSEEK_MODEL_ID: ${DEEPSEEK_MODEL_ID:-UNSET}
       DEEPSEEK_API_KEY_FILE: /run/secrets/deepseek_litellm_key
-    secrets: [postgres_runtime_password, postgres_ca, workload_secrets, kimi_litellm_key, deepseek_litellm_key]
+    secrets: [postgres_runtime_password, postgres_ca, workload_secrets, openrouter_api_key, kimi_litellm_key, deepseek_litellm_key]
     ports: ["127.0.0.1:8084:8084"]
     networks: [control, data]
     mem_limit: 192m
@@ -183,6 +190,7 @@ secrets:
   internal_ca: {file: /opt/atlantis/secrets/internal_ca.crt}
   policy_client_cert: {file: /opt/atlantis/secrets/policy_client.crt}
   policy_client_key: {file: /opt/atlantis/secrets/policy_client.key}
+  openrouter_api_key: {file: /opt/atlantis/secrets/openrouter_api_key.txt}
   kimi_litellm_key: {file: /opt/atlantis/secrets/kimi_litellm_key.txt}
   deepseek_litellm_key: {file: /opt/atlantis/secrets/deepseek_litellm_key.txt}
   amqp_url: {file: /opt/atlantis/secrets/amqp_url.txt}

@@ -50,3 +50,13 @@ El canal no recibe una orden ejecutable hasta que Policy Gateway evalúa evidenc
 | Contaminación GPL | Gate de imports y proceso externo |
 
 Pendientes antes de producción: identidad OIDC/mTLS, secretos KMS/Vault, ledger JIT PostgreSQL atómico, llamadas a proveedores reales, verificación de webhooks, OTel, RabbitMQ, SAST/DAST/SCA, pentest, load test y DR.
+
+## Proveedores de modelos externos
+
+El Model Gateway admite `openrouter`, `kimi` y `deepseek` en el orden definido
+por `ATLANTIS_MODEL_PROVIDER_ORDER`. OpenRouter se comunica directamente con el
+endpoint HTTPS oficial, recibe la clave sólo mediante Docker secret y exige un
+`OPENROUTER_MODEL_ID` explícito. La ruta nunca entrega secretos al modelo y
+continúa aplicando redacción, presupuesto, salida JSON y fallback. La clase
+`RESTRICTED` no puede salir por OpenRouter hasta agregar `openrouter` a
+`RESTRICTED_PROVIDER_ALLOWLIST` mediante aprobación formal.

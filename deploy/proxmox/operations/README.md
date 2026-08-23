@@ -27,6 +27,10 @@ Este directorio automatiza un despliegue controlado de RC4 en `atlantis-core` (`
    - `ATLANTIS_DATABASE_SSLMODE=verify-full`
 
 5. Crear todos los archivos listados por `01_validate_secrets.sh`. El rollout los deja `0400`, propiedad del uid 10001, y cada contenedor sólo monta los secretos que necesita; se eliminó el acceso grupal compartido. Los certificados deben provenir de la CA interna autorizada. No generar certificados autofirmados improvisados para piloto.
+   Para OpenRouter, guardar la clave rotada exclusivamente en
+   `/opt/atlantis/secrets/openrouter_api_key.txt`; nunca colocarla en `.env`,
+   Compose, Git, prompts o reportes. Configurar un `OPENROUTER_MODEL_ID` exacto
+   y aprobado; `UNSET` mantiene el proveedor deshabilitado de forma segura.
 6. Confirmar que `PYTHON_BASE_IMAGE` contiene un digest `@sha256:...`.
 7. Si la VM conserva el checksum legacy de 004, completar en `rc4-rollout.env` el aprobador, fecha y archivo de evidencia para la migración 005. Nunca usar un nombre genérico o automatizado como aprobador.
 
@@ -78,7 +82,7 @@ El rollback de base de datos no es automático. Para restaurar `atlantis.dump` s
 - Compose resuelto antes del cambio.
 - Inventario de contenedores e imágenes anteriores.
 - Digests locales de la base y siete servicios RC4.
-- Healthchecks, 65 pruebas, shadow E2E y DR drill.
+- Healthchecks, 84 pruebas, shadow E2E y DR drill.
 - Estado RLS y políticas PostgreSQL.
 - Uso de recursos por contenedor.
 - Copia de bloqueos y SBOM de fuente.

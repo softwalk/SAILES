@@ -3,7 +3,7 @@ from pathlib import Path
 
 from atlantis_contracts.http import JsonRouter
 from atlantis_contracts.middleware import configure_rate_limit, configure_workload_auth
-from .gateway import ModelGateway, ModelRequest, OpenAICompatibleProvider, ProviderError
+from .gateway import ModelGateway, ModelRequest, OpenAICompatibleProvider, OpenRouterProvider, ProviderError
 
 router = JsonRouter(service_name="model-gateway")
 configure_workload_auth(router)
@@ -19,16 +19,28 @@ def configured_secret(name: str) -> str:
 
 
 def configured_providers():
-    providers = []
+    available = {}
+    try:
+        available["openrouter"] = OpenRouterProvider(
+            os.getenv("OPENROUTER_MODEL_ID", "UNSET"),
+            configured_secret("OPENROUTER_API_KEY"),
+            os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
+            os.getenv("OPENROUTER_HTTP_REFERER", ""),
+            os.getenv("OPENROUTER_APP_TITLE", "Atlantis Autonomous Sales"),
+        )
+    except ProviderError:
+        pass
     for name in ("KIMI", "DEEPSEEK"):
         try:
-            providers.append(OpenAICompatibleProvider(
+            available[name.lower()] = OpenAICompatibleProvider(
                 name.lower(), os.environ.get(f"{name}_BASE_URL", ""),
                 os.environ.get(f"{name}_MODEL_ID", "UNSET"), configured_secret(f"{name}_API_KEY"),
-            ))
+            )
         except ProviderError:
             pass
-    return providers
+    order = os.getenv("ATLANTIS_MODEL_PROVIDER_ORDER", "openrouter,kimi,deepseek")
+    names = [item.strip().lower() for item in order.split(",") if item.strip()]
+    return [available[name] for name in dict.fromkeys(names) if name in available]
 
 
 @router.route("GET", "/health")
@@ -40,7 +52,8 @@ def health(_):
 def complete(body):
     try:
         request = ModelRequest(**body)
-        response = ModelGateway(configured_providers(), set(filter(None, os.getenv("RESTRICTED_PROVIDER_ALLOWLIST", "").split(",")))).complete(request)
+        restricted = {item.strip().lower() for item in os.getenv("RESTRICTED_PROVIDER_ALLOWLIST", "").split(",") if item.strip()}
+        response = ModelGateway(configured_providers(), restricted).complete(request)
         return 200, response
     except ProviderError as exc:
         return 503, {"error": str(exc)}

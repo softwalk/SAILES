@@ -17,6 +17,8 @@ Consultadas el 22 de agosto de 2026. Las versiones, condiciones y términos debe
 - Ley Federal de Protección de Datos Personales en Posesión de los Particulares vigente: https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf
 - Kimi API / modelos: https://platform.moonshot.ai/docs/models
 - DeepSeek API: https://api-docs.deepseek.com/
+- OpenRouter API: https://openrouter.ai/docs/api/reference/overview — API compatible con OpenAI; autenticación Bearer y endpoint `https://openrouter.ai/api/v1`. Es un servicio externo, no un componente redistribuido.
+- OpenRouter structured outputs: https://openrouter.ai/docs/features/structured-outputs — soporte de `response_format` sujeto a las capacidades del modelo seleccionado.
 
 ## Notas de diligencia
 
@@ -25,4 +27,4 @@ Consultadas el 22 de agosto de 2026. Las versiones, condiciones y términos debe
 - n8n: excluido de la arquitectura distribuible. No se permite incorporarlo como dependencia ni sustituir Node-RED sin un nuevo dictamen y cambio OpenSpec aprobado.
 - Evolution API admite alternativas técnicas, pero esta especificación obliga WhatsApp Cloud API oficial en producción. Su licencia 2026 agrega condiciones de notificación y ciertas versiones exigen activación; revisar la versión exacta. La opción preferida es un adaptador directo a Meta.
 - REPEP pertenece a Profeco. El mecanismo de consulta empresarial debe acordarse/autorizarse; la especificación no presupone una API pública ni autoriza scraping.
-- Kimi K3 y los modelos DeepSeek cambian con frecuencia; los IDs quedan en configuración y el dominio usa alias de capacidad. Antes de enviar datos se validan residencia, retención, entrenamiento, transferencias y subprocesadores.
+- Kimi K3, DeepSeek y el catálogo de OpenRouter cambian con frecuencia; los IDs quedan en configuración y el dominio usa alias de capacidad. Producción prohíbe alias mutables y exige fijar el ID exacto, términos, residencia, retención, entrenamiento, transferencias y subprocesadores.

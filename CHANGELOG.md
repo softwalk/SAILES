@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — OpenRouter
+
+- Integrado OpenRouter en `model_gateway` con endpoint HTTPS oficial allowlisted,
+  autenticación Bearer desde Docker secret y modelo explícito.
+- Añadido orden configurable `openrouter,kimi,deepseek`, fallback existente y
+  bloqueo de OpenRouter para datos `RESTRICTED` salvo allowlist aprobada.
+- Rechazados endpoints alternativos, credenciales embebidas en URL y el alias
+  mutable `openrouter/auto`.
+- Añadidos runbook, OpenSpec, configuración Proxmox y pruebas de secreto,
+  encabezados, endpoint, routing y clasificación.
+
 ## 0.9.0-rc4 - 2026-08-22
 
 - Corregida la política RLS de supresiones GLOBAL; su escritura requiere el rol separado `atlantis_suppression_admin`.

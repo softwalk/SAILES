@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
-  "serialNumber": "urn:uuid:2a35a15f-0923-4fe7-982f-bfd01082a41f",
+  "serialNumber": "urn:uuid:3735adf0-4107-4c83-abc6-f3d5ea32b285",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-08-23T15:23:32.339494+00:00",
+    "timestamp": "2026-08-23T19:12:36.142027+00:00",
     "component": {
       "type": "application",
       "name": "atlantis-autonomous-sales",
@@ -73,7 +73,7 @@
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "7ed11ab6fd4b4cc7b039c73bef1272d171f89cf822f9cd05e8e4b193d1cca233"
+          "content": "cf9ede78532383e5ebd8a532c47dfe5c5fef4cc087267776eafd75cac29071bb"
         }
       ],
       "licenses": [
