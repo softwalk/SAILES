@@ -2,7 +2,8 @@
 
 ## Completado y probado
 
-- Política determinística fail-closed, REPEP, consentimiento, supresión, horarios y frecuencia.
+- Política determinística fail-closed, REPEP por campaña con excepción B2B
+  aprobada/evidenciada, consentimiento, supresión, horarios y frecuencia.
 - Campañas y aprobaciones ligadas a hash; sensibilidad y opt-out humano.
 - Tokens JIT firmados, audiencia, TTL, claims, replay y consumo PostgreSQL atómico.
 - OpenOutreach por CLI externo verificado por digest; OpenSales/SalesGPT sin side effects.

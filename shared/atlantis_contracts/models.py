@@ -34,6 +34,14 @@ class ContactabilityRequest:
     conversation_window_open: bool | None = None
     repep_snapshot_valid: bool | None = None
     repep_listed: bool | None = None
+    # Campaign-level switch. It starts disabled as requested, but a promotional
+    # VOICE action can use the exception only when the CRM supplies an approved,
+    # evidenced B2B classification. This is not a caller-controlled bypass in
+    # production because EvidenceClient overwrites these fields from CRM.
+    repep_enabled: bool = False
+    repep_exemption_type: str | None = None
+    repep_exemption_approved: bool = False
+    repep_exemption_evidence_ref: str | None = None
     local_hour: int | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 

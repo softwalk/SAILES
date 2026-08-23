@@ -25,7 +25,9 @@ El código RC2 es desplegable como actualización application-only sobre VM 110,
 2. Sustituir el usuario general `atlantis` por roles separados para migración, runtime y auditoría.
 3. Restringir 1880/3001/9090/15672 a una red administrativa; el hecho de estar en LAN no equivale a autorización.
 4. No habilitar HTTPS público hasta definir dominio, certificado, WAF/rate limits y autenticación de operador.
-5. No activar llamadas/WhatsApp por la mera presencia de credenciales: Policy Gateway, REPEP, consentimiento, horario, campaña aprobada y JIT deben pasar en la misma decisión.
+5. No activar llamadas/WhatsApp por la mera presencia de credenciales: Policy Gateway,
+   REPEP o excepción B2B aprobada según campaña, consentimiento, horario, campaña
+   aprobada y JIT deben pasar en la misma decisión.
 
 ## Inconsistencias del informe que se tratan como riesgo
 

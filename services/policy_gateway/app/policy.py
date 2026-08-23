@@ -7,7 +7,7 @@ from atlantis_contracts import Channel, ContactabilityRequest, Decision, Decisio
 class PolicyEngine:
     """Deterministic, versioned and fail-closed contactability policy."""
 
-    def __init__(self, policy_version: str = "mx-contactability@1", allowed_hours=(9, 20)):
+    def __init__(self, policy_version: str = "mx-contactability@2", allowed_hours=(9, 20)):
         self.policy_version = policy_version
         self.allowed_hours = allowed_hours
 
@@ -30,10 +30,18 @@ class PolicyEngine:
 
         promotional = request.purpose.upper() in {"PROMOTIONAL", "MARKETING", "SALES"}
         if request.channel == Channel.VOICE and promotional:
-            if request.repep_snapshot_valid is not True:
-                reasons.append("REPEP_EVIDENCE_MISSING_OR_STALE")
-            elif request.repep_listed is not False:
-                reasons.append("REPEP_LISTED_OR_UNKNOWN")
+            if request.repep_enabled:
+                if request.repep_snapshot_valid is not True:
+                    reasons.append("REPEP_EVIDENCE_MISSING_OR_STALE")
+                elif request.repep_listed is not False:
+                    reasons.append("REPEP_LISTED_OR_UNKNOWN")
+            else:
+                if (request.repep_exemption_type or "").upper() != "B2B":
+                    reasons.append("REPEP_DISABLED_REQUIRES_B2B")
+                if request.repep_exemption_approved is not True:
+                    reasons.append("REPEP_B2B_EXCEPTION_NOT_APPROVED")
+                if not (request.repep_exemption_evidence_ref or "").strip():
+                    reasons.append("REPEP_B2B_EVIDENCE_MISSING")
         if request.channel == Channel.WHATSAPP and promotional:
             if request.consent_active is not True:
                 reasons.append("WHATSAPP_OPT_IN_MISSING")
@@ -44,5 +52,11 @@ class PolicyEngine:
         return Decision(
             decision_id=str(uuid4()), outcome=outcome, reason_codes=tuple(reasons or ["POLICY_ALLOW"]),
             policy_version=self.policy_version, decided_at=datetime.now(UTC),
-            evidence={"channel": request.channel.value, "campaign_version_id": request.campaign_version_id},
+            evidence={
+                "channel": request.channel.value,
+                "campaign_version_id": request.campaign_version_id,
+                "repep_enabled": request.repep_enabled,
+                "repep_exemption_type": request.repep_exemption_type,
+                "repep_exemption_evidence_ref": request.repep_exemption_evidence_ref,
+            },
         )

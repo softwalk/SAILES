@@ -14,7 +14,9 @@ No se promociona si hay hallazgos críticos, decisiones no reconstruibles, dupli
 
 - Versión exacta aprobada por un usuario distinto del creador cuando aplica.
 - Segmento, propósito, base jurídica/consentimiento, horario y frecuencia validados.
-- REPEP disponible y evidencia dentro de vigencia para todos los números a llamar.
+- Por campaña, REPEP activado con evidencia vigente, o excepción B2B aprobada y
+  evidenciada. El interruptor inicia desactivado, pero una campaña sin excepción
+  B2B completa permanece bloqueada.
 - Opt-in y plantilla/ventana válidos para WhatsApp.
 - Claims, oferta, guion, idioma, transferencias y opt-out aprobados.
 - Presupuesto, límites de volumen, quality rating y umbrales de pausa configurados.
@@ -71,4 +73,3 @@ Para cada acción externa: tenant, contacto tokenizado, campaña/versión/hash, 
 - Restauración PostgreSQL a punto en el tiempo.
 - Marketia fuera de línea 24 horas y reconciliación posterior.
 - Revocación masiva y verificación de cancelación en menos de 60 segundos.
-

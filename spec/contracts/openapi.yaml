@@ -304,6 +304,18 @@ components:
         content_hash: {$ref: '#/components/schemas/Sha256'}
         workflow_version: {type: string, minLength: 1}
         requested_at: {type: string, format: date-time}
+        repep_enabled:
+          type: boolean
+          default: false
+          description: >-
+            Interruptor por campaña. En producción el CRM sobrescribe este valor
+            desde el artefacto aprobado; false sólo permite voz promocional con
+            excepción B2B aprobada y evidenciada.
+        repep_exemption_type:
+          type: [string, 'null']
+          enum: [B2B, null]
+        repep_exemption_approved: {type: boolean, default: false}
+        repep_exemption_evidence_ref: {type: [string, 'null'], maxLength: 500}
     ContactabilityDecision:
       type: object
       required: [decision_id, action_intent_id, result, policy_version, evaluated_rules, expires_at]

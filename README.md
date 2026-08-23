@@ -7,7 +7,9 @@ Implementación de referencia del OpenSpec v1.2. El repositorio entrega un relea
 ## Lo que ya funciona
 
 - Policy Gateway determinístico y `fail closed` para voz/WhatsApp.
-- REPEP vigente obligatorio para llamadas promocionales.
+- REPEP configurable por campaña e inicialmente desactivado. Para voz promocional,
+  desactivarlo sólo es válido con campaña B2B, excepción aprobada y evidencia
+  jurídica persistida; B2C continúa exigiendo REPEP vigente y fail-closed.
 - Consentimiento, supresiones, horario, frecuencia, aprobación y hash de campaña.
 - Tokens HMAC JIT con audiencia, TTL máximo de 5 minutos y consumo único.
 - Campañas versionadas; cualquier cambio material invalida la aprobación.

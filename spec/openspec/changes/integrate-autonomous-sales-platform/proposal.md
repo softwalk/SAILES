@@ -4,7 +4,7 @@
 
 Construir una plataforma multi-tenant que descubra prospectos, prepare campañas personalizadas, converse por voz y WhatsApp, actualice el CRM y recomiende cierres, manteniendo a un humano en los puntos de riesgo y bloqueando automáticamente todo contacto no permitido.
 
-La autonomía se limita a investigar, clasificar, redactar, resumir, priorizar y ejecutar acciones previamente autorizadas. El sistema no puede autootorgarse permisos, alterar políticas, omitir REPEP, inventar consentimiento, aplicar descuentos sensibles, comprometer términos contractuales ni enviar pagos sin controles.
+La autonomía se limita a investigar, clasificar, redactar, resumir, priorizar y ejecutar acciones previamente autorizadas. El sistema no puede autootorgarse permisos, alterar políticas, omitir REPEP cuando aplica ni inventar una excepción B2B, inventar consentimiento, aplicar descuentos sensibles, comprometer términos contractuales ni enviar pagos sin controles.
 
 ## Problema
 

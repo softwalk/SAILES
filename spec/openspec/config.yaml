@@ -2,7 +2,10 @@ schema: spec-driven
 context: |
   Plataforma multi-tenant de prospección y ventas asistidas por IA para México.
   Toda acción saliente debe pasar por Policy & Compliance Gateway.
-  REPEP se aplica mediante snapshot autorizado de forma obligatoria a llamadas publicitarias; WhatsApp exige opt-in y Cloud API oficial.
+  REPEP se configura por campaña y comienza desactivado. Una llamada promocional
+  con REPEP desactivado sólo puede continuar si el artefacto aprobado acredita B2B,
+  contiene referencia de evidencia jurídica y Policy Gateway valida la excepción;
+  B2C requiere snapshot REPEP autorizado y vigente. WhatsApp exige opt-in y Cloud API oficial.
   Los modelos no tienen acceso directo a adaptadores de canal ni a secretos.
 rules:
   proposal:

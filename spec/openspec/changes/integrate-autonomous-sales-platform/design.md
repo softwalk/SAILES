@@ -82,7 +82,10 @@ Una aprobación se liga a un manifiesto canónico que contiene `campaign_version
 
 1. LangGraph crea `action_intent` con tenant, contacto, campaña, propósito, canal y contenido hash.
 2. Policy Gateway verifica tenant, estado de campaña, aprobación, DNC interno, consentimiento/base jurídica, horario, frecuencia y límites.
-3. Para voz promocional consulta el snapshot REPEP autorizado aplicable, con identificador de lote, fecha efectiva, recibo/contrato, hash y vigencia definida por Legal; si no existe, está vencido o es ambiguo, deniega.
+3. Para voz promocional evalúa la configuración de campaña. Si REPEP está activo,
+   consulta el snapshot autorizado con lote, fecha efectiva, recibo/contrato, hash
+   y vigencia; si falta, está vencido o es ambiguo, deniega. Si está inactivo,
+   exige excepción B2B aprobada y evidencia jurídica; en caso contrario, deniega.
 4. Para WhatsApp promocional exige opt-in verificable y cumplimiento de plantilla/ventana conversacional.
 5. Cuando un worker retira la acción para ejecución, repite la evaluación y emite `outbound_authorization` justo a tiempo, firmado, de un solo uso y TTL máximo 5 minutos.
 6. El adaptador valida firma, audiencia, tenant, contacto, campaña, hash, TTL y no-reutilización. VICIdial/Asterisk vuelve a validar en el punto exacto de `originate/dial`.

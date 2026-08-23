@@ -11,4 +11,8 @@ class EvidenceClient:
                 "internally_suppressed":evidence.get("suppressed",True),
                 "consent_active":evidence.get("consent_active",False),
                 "repep_snapshot_valid":evidence.get("repep_snapshot_valid",False),
-                "repep_listed":evidence.get("repep_listed")}
+                "repep_listed":evidence.get("repep_listed"),
+                "repep_enabled":evidence.get("repep_enabled",False),
+                "repep_exemption_type":evidence.get("repep_exemption_type"),
+                "repep_exemption_approved":evidence.get("repep_exemption_approved",False),
+                "repep_exemption_evidence_ref":evidence.get("repep_exemption_evidence_ref")}

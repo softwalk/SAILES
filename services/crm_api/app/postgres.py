@@ -87,9 +87,23 @@ class PostgresCRMRepository:
                        WHERE cv.tenant_id=%s AND cv.id=%s AND cv.status IN ('APPROVED','RUNNING')) AS campaign_approved,
                      (SELECT ca.canonical_manifest->'content_hashes'->>lower(%s)
                        FROM campaign_artifact ca WHERE ca.tenant_id=%s AND ca.campaign_version_id=%s
-                       ORDER BY ca.created_at DESC LIMIT 1) AS approved_content_hash""",
+                       ORDER BY ca.created_at DESC LIMIT 1) AS approved_content_hash,
+                     COALESCE((SELECT (ca.canonical_manifest->'repep'->>'enabled')::boolean
+                       FROM campaign_artifact ca WHERE ca.tenant_id=%s AND ca.campaign_version_id=%s
+                       ORDER BY ca.created_at DESC LIMIT 1), false) AS repep_enabled,
+                     (SELECT ca.canonical_manifest->'repep'->>'exemption_type'
+                       FROM campaign_artifact ca WHERE ca.tenant_id=%s AND ca.campaign_version_id=%s
+                       ORDER BY ca.created_at DESC LIMIT 1) AS repep_exemption_type,
+                     COALESCE((SELECT (ca.canonical_manifest->'repep'->>'exemption_approved')::boolean
+                       FROM campaign_artifact ca WHERE ca.tenant_id=%s AND ca.campaign_version_id=%s
+                       ORDER BY ca.created_at DESC LIMIT 1), false) AS repep_exemption_approved,
+                     (SELECT ca.canonical_manifest->'repep'->>'exemption_evidence_ref'
+                       FROM campaign_artifact ca WHERE ca.tenant_id=%s AND ca.campaign_version_id=%s
+                       ORDER BY ca.created_at DESC LIMIT 1) AS repep_exemption_evidence_ref""",
                 (tenant_id, contact_id, phone_token, tenant_id, contact_id, channel, purpose,
-                 tenant_id, campaign_version_id, channel, tenant_id, campaign_version_id),
+                 tenant_id, campaign_version_id, channel, tenant_id, campaign_version_id,
+                 tenant_id, campaign_version_id, tenant_id, campaign_version_id,
+                 tenant_id, campaign_version_id, tenant_id, campaign_version_id),
             )
             row = self._row(cursor)
             cursor.execute(

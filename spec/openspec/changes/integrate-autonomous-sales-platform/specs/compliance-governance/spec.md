@@ -10,8 +10,22 @@ Toda acción saliente SHALL obtener una decisión determinista de Policy Gateway
 - **WHEN** llega a voz o WhatsApp
 - **THEN** el adaptador lo rechaza, no contacta y emite alerta de seguridad
 
-### Requirement: Exclusión REPEP obligatoria en voz promocional
-Antes de cada llamada publicitaria, el sistema SHALL comprobar REPEP mediante un snapshot obtenido por un mecanismo autorizado por Profeco y SHALL conservar número normalizado/tokenizado, resultado, lote, fecha efectiva, contrato/recibo, timestamp, vigencia y hash. Error, ambigüedad o caducidad SHALL resultar en `DENY`. La matriz jurídica SHALL añadir cualquier registro sectorial aplicable sin sustituir REPEP.
+### Requirement: REPEP configurable por campaña con excepción B2B controlada
+Cada versión de campaña SHALL contener `repep.enabled`, cuyo valor inicial SHALL
+ser `false`. Antes de una llamada promocional:
+
+- Si `repep.enabled=true`, el sistema SHALL comprobar REPEP mediante un snapshot
+  obtenido por un mecanismo autorizado por Profeco y SHALL conservar número
+  normalizado/tokenizado, resultado, lote, fecha efectiva, contrato/recibo,
+  timestamp, vigencia y hash. Error, ambigüedad o caducidad SHALL resultar en `DENY`.
+- Si `repep.enabled=false`, el sistema SHALL permitir continuar únicamente cuando
+  la versión aprobada declare `exemption_type=B2B`, tenga aprobación humana y una
+  referencia de evidencia jurídica no vacía. La falta de cualquiera de estos
+  elementos SHALL resultar en `DENY`.
+- La matriz jurídica SHALL añadir registros sectoriales aplicables y SHALL impedir
+  usar la excepción B2B para campañas B2C o contactos de consumidores.
+
+La configuración y evidencia SHALL formar parte del hash inmutable de campaña.
 
 #### Scenario: Número inscrito
 - **GIVEN** evidencia vigente de que el número está inscrito en REPEP
@@ -22,6 +36,18 @@ Antes de cada llamada publicitaria, el sistema SHALL comprobar REPEP mediante un
 - **GIVEN** que no existe evidencia local vigente y la consulta autorizada falla
 - **WHEN** se solicita una llamada promocional
 - **THEN** se bloquea, se reprograma para revisión y nunca se marca como permitido
+
+#### Scenario: Campaña B2B aprobada con REPEP desactivado
+- **GIVEN** una campaña de voz promocional aprobada con `repep.enabled=false`
+- **AND** `exemption_type=B2B`, aprobación humana y referencia de evidencia jurídica
+- **WHEN** Policy Gateway evalúa el contacto
+- **THEN** no exige snapshot REPEP para esa intención y conserva la excepción en auditoría
+
+#### Scenario: REPEP desactivado sin evidencia B2B
+- **GIVEN** una campaña de voz promocional con `repep.enabled=false`
+- **AND** falta clasificación B2B, aprobación o evidencia
+- **WHEN** Policy Gateway evalúa el contacto
+- **THEN** la decisión es `DENY` y no se emite autorización
 
 ### Requirement: Exclusión interna y consentimiento
 El sistema SHALL mantener exclusiones globales y por tenant/canal/propósito. La revocación SHALL prevalecer sobre una autorización anterior y SHALL propagarse a colas y proyecciones.

@@ -15,7 +15,7 @@ Especificación ejecutable para una plataforma de prospección y venta asistida 
 | WhatsApp | `WhatsAppProvider` usa Cloud API oficial directamente en producción; Evolution API es un adaptador opcional y debe usar su transporte oficial. |
 | PostgreSQL | Sistema de registro para CRM, consentimiento, auditoría, memoria, eventos y checkpoints. |
 | Kimi K3 / DeepSeek | Proveedores intercambiables detrás de `ModelGateway`; selección por tarea, política, coste y disponibilidad. |
-| REPEP | Exclusión obligatoria y verificable antes de cada llamada promocional. REPEP es operado por Profeco. |
+| REPEP | Control configurable por campaña. Inicia desactivado; voz promocional sólo omite consulta cuando existe excepción B2B aprobada y evidenciada. REPEP es operado por Profeco. |
 | Marketia | Servicio propietario separado para campañas, activos, atribución, seguimiento y sincronización de resultados. |
 | Servicios Atlantis | Atlantis-Neobot, Marketia, Policy Gateway, CRM API y todos los adaptadores se construyen, publican y despliegan como servicios propietarios separados, con imágenes, repositorios y SBOM propios. |
 | Humano | Aprobar campañas inicialmente y resolver acciones/oportunidades sensibles. |
@@ -40,7 +40,7 @@ Especificación ejecutable para una plataforma de prospección y venta asistida 
 2. Toda llamada saliente exige autorización efímera ligada a contacto, campaña, propósito y versión.
 3. WhatsApp promocional exige opt-in demostrable, plantilla válida cuando aplique y exclusión interna vigente.
 4. Una modificación material invalida la aprobación de campaña.
-5. La indisponibilidad o ambigüedad de REPEP bloquea llamadas promocionales (`fail closed`).
+5. Cuando REPEP está activo, su indisponibilidad o ambigüedad bloquea llamadas promocionales. Cuando está inactivo, falta de excepción B2B aprobada/evidenciada también bloquea (`fail closed`).
 6. El modelo propone; las políticas determinísticas y el humano autorizan.
 7. Cada decisión debe poder reconstruirse con evidencia, versión y actor.
 8. La autorización se emite justo antes de ejecutar, no al insertar una acción en una cola.

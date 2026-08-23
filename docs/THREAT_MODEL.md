@@ -11,7 +11,7 @@
 | SSRF/redirección | Proveedores | HTTPS y host allowlist; redirects bloqueados | Egress firewall |
 | Elevación de privilegio | Multi-tenant | Tenant en JWT, `SET LOCAL`, RLS `FORCE` en esquema | Test con roles PostgreSQL reales |
 | Prompt injection | Agentes | Fuentes no confiables, outputs limitados, modelos sin herramientas de canal | Suite adversarial con modelos reales |
-| Contacto ilícito | Persona | REPEP/opt-in/supresión/horarios/frecuencia fail-closed | Dictamen legal y evidencia real |
+| Contacto ilícito | Persona | REPEP o excepción B2B aprobada/opt-in/supresión/horarios/frecuencia fail-closed | Dictamen legal y evidencia real |
 | Reidentificación | Analítica | Datos tenant-scoped y exportación controlada | Políticas de agregación/k-anonimato |
 | Retención excesiva | CRM/audio | ARCO, legal hold modelado, clasificación y vigencia de memoria | Jobs de borrado y storage real |
 

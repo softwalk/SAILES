@@ -40,7 +40,7 @@ El canal no recibe una orden ejecutable hasta que Policy Gateway evalúa evidenc
 |---|---|
 | Marcación sin autorización | Token JIT, audiencia y claims exactos |
 | Replay | Ledger de consumo único |
-| REPEP caído/ambiguo | Denegación fail-closed |
+| REPEP activo caído/ambiguo o excepción B2B incompleta | Denegación fail-closed |
 | Cambio tras aprobación | Comparación de hash e invalidación |
 | Opt-in ausente | Denegación WhatsApp |
 | Marketia habilita contacto | Campos protegidos rechazados |

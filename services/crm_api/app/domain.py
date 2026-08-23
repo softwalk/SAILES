@@ -131,11 +131,16 @@ class CRMStore:
         campaign = self.campaigns.get(self._key(tenant_id, campaign_version_id), {})
         consent = self.consents.get((tenant_id, contact_id, channel), {})
         content_hashes = campaign.get("manifest", {}).get("content_hashes", {})
+        repep = campaign.get("manifest", {}).get("repep", {})
         return {"suppressed":bool(self.suppressions.get(self._key(tenant_id, contact_id), {}).get("active", False)),
                 "consent_active":bool(consent.get("active", False)),
                 "campaign_approved":campaign.get("status") == "APPROVED" and bool(campaign.get("approved_hash")),
                 "approved_content_hash":content_hashes.get(channel.lower()),
-                "repep_snapshot_valid":False, "repep_listed":None}
+                "repep_snapshot_valid":False, "repep_listed":None,
+                "repep_enabled":bool(repep.get("enabled", False)),
+                "repep_exemption_type":repep.get("exemption_type"),
+                "repep_exemption_approved":bool(repep.get("exemption_approved", False)),
+                "repep_exemption_evidence_ref":repep.get("exemption_evidence_ref")}
 
     def export_audit(self, tenant_id: str) -> list[dict]:
         return [deepcopy(event) for event in self.audit if event["tenant_id"] == tenant_id]

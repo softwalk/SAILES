@@ -147,7 +147,8 @@ Cada tarea se cierra con código, pruebas, observabilidad, documentación y evid
 
 ## Criterios finales de Done
 
-- [ ] Evidencia automatizada de que 100% de llamadas requieren REPEP vigente y token válido.
+- [ ] Evidencia automatizada de que 100% de llamadas requieren token válido y,
+  según campaña, REPEP vigente o excepción B2B aprobada/evidenciada.
 - [ ] Evidencia automatizada de que 100% de WhatsApp iniciado requiere opt-in y reglas de plantilla/ventana.
 - [ ] Cero duplicados en pruebas de reentrega y crash.
 - [ ] Auditor reconstruye una muestra aleatoria de acciones sin acceso privilegiado a producción.

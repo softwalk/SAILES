@@ -15,7 +15,7 @@ class PolicyTests(unittest.TestCase):
             tenant_id="t1", contact_id="c1", campaign_version_id="v1", purpose="PROMOTIONAL",
             channel=Channel.VOICE, content_hash=self.content_hash, requested_at=datetime.now(UTC),
             campaign_approved=True, approved_content_hash=self.content_hash, local_hour=12,
-            repep_snapshot_valid=True, repep_listed=False,
+            repep_enabled=True, repep_snapshot_valid=True, repep_listed=False,
         )
 
     def test_voice_allowed_with_current_repep(self):
@@ -27,6 +27,45 @@ class PolicyTests(unittest.TestCase):
         decision = policy_mod.PolicyEngine().decide(request)
         self.assertEqual(decision.outcome, DecisionOutcome.DENY)
         self.assertIn("REPEP_EVIDENCE_MISSING_OR_STALE", decision.reason_codes)
+
+    def test_repep_starts_disabled_but_requires_approved_b2b_exception(self):
+        request = ContactabilityRequest(**{
+            **self.base,
+            "repep_enabled": False,
+            "repep_snapshot_valid": None,
+            "repep_listed": None,
+        })
+        decision = policy_mod.PolicyEngine().decide(request)
+        self.assertEqual(decision.outcome, DecisionOutcome.DENY)
+        self.assertIn("REPEP_DISABLED_REQUIRES_B2B", decision.reason_codes)
+        self.assertIn("REPEP_B2B_EXCEPTION_NOT_APPROVED", decision.reason_codes)
+        self.assertIn("REPEP_B2B_EVIDENCE_MISSING", decision.reason_codes)
+
+    def test_approved_b2b_campaign_can_disable_repep(self):
+        request = ContactabilityRequest(**{
+            **self.base,
+            "repep_enabled": False,
+            "repep_snapshot_valid": None,
+            "repep_listed": None,
+            "repep_exemption_type": "B2B",
+            "repep_exemption_approved": True,
+            "repep_exemption_evidence_ref": "legal/b2b/campaign-v1.pdf",
+        })
+        decision = policy_mod.PolicyEngine().decide(request)
+        self.assertEqual(decision.outcome, DecisionOutcome.ALLOW)
+        self.assertEqual(decision.policy_version, "mx-contactability@2")
+
+    def test_b2c_campaign_cannot_bypass_repep(self):
+        request = ContactabilityRequest(**{
+            **self.base,
+            "repep_enabled": False,
+            "repep_exemption_type": "B2C",
+            "repep_exemption_approved": True,
+            "repep_exemption_evidence_ref": "legal/review.pdf",
+        })
+        decision = policy_mod.PolicyEngine().decide(request)
+        self.assertEqual(decision.outcome, DecisionOutcome.DENY)
+        self.assertIn("REPEP_DISABLED_REQUIRES_B2B", decision.reason_codes)
 
     def test_whatsapp_requires_opt_in_and_template(self):
         request = ContactabilityRequest(**{**self.base, "channel": Channel.WHATSAPP, "consent_active": False})
