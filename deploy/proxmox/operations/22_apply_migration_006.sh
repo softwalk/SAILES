@@ -54,6 +54,17 @@ if [[ "$CK005_REGISTERED" != "853d86220033dff82930c9e8e91589b6602eba6b00a43c7957
   fail "unexpected migration 005 checksum: $CK005_REGISTERED"
 fi
 echo "005 registrada como 853d8622 (existente) -> 006 aplica."
+
+CK006_EXPECTED=$(sha256sum "$SQL" | awk '{print $1}')
+CK006_RECORDED=$(database_psql -Atqc "SELECT checksum FROM schema_migration WHERE version='006_reconcile_migration_005_applied_checksum'" 2>/dev/null || true)
+if [[ -n "$CK006_RECORDED" ]]; then
+  [[ "$CK006_RECORDED" == "$CK006_EXPECTED" ]] || fail "migration 006 checksum mismatch"
+  RECONCILED=$(database_psql -Atqc "SELECT count(*) FROM schema_migration_reconciliation_005 WHERE version='005_reconcile_migration_004_checksum' AND registered_checksum='853d86220033dff82930c9e8e91589b6602eba6b00a43c795741a716143cf23e' AND executed_checksum='5ba50e9c2e465eea7e65a8c47f0ae89d2791e498ddd02c95c6dda04fa9e91d8d' AND approved_by IS NOT NULL AND approved_date IS NOT NULL AND evidence_sha256 ~ '^[a-f0-9]{64}$'" 2>/dev/null || true)
+  [[ "$RECONCILED" == "1" ]] || fail "migration 006 reconciliation evidence missing"
+  echo "PASS 006 ya aplicada; checksum y evidencia verificados."
+  exit 0
+fi
+
 [[ -n "$APPROVED_BY" ]] || fail "aprobador humano obligatorio (--approved-by)"
 [[ "$APPROVED_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || fail "fecha aprobación obligatoria (--approved-date YYYY-MM-DD)"
 [[ -n "$EVIDENCE_REF" ]] || fail "referencia de evidencia obligatoria (--evidence-ref)"
@@ -74,7 +85,7 @@ echo "Backup verificado: $(cat "$DUMP.sha256")"
 echo "$BK" > /tmp/006_backup_dir.txt
 
 # --- Checksum del archivo 006 ---
-CK006=$(sha256sum "$SQL" | awk '{print $1}')
+CK006="$CK006_EXPECTED"
 
 # --- Si no se pasó evidence-sha256, lo calculo del archivo de evidencia ---
 if [[ -z "$EVIDENCE_SHA" ]]; then

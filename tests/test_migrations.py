@@ -72,6 +72,12 @@ class MigrationContractTests(unittest.TestCase):
         self.assertIn("sha256sum -c", text)
         self.assertIn("fail \"pg_dump falló\"", text)
 
+    def test_006_runner_never_reapplies_an_existing_reconciliation(self):
+        text = (ROOT / "deploy/proxmox/operations/22_apply_migration_006.sh").read_text()
+        self.assertIn("CK006_RECORDED", text)
+        self.assertIn("checksum y evidencia verificados", text)
+        self.assertLess(text.index("CK006_RECORDED"), text.index("Backup PostgreSQL real"))
+
     def test_007_validates_canonical_fingerprint(self):
         """007 valida el fingerprint canónico de 005 contra el valor esperado (de47dcf7)."""
         text = (ROOT / "database/007_reconcile_migration_005_fingerprint_canonical.sql").read_text()
