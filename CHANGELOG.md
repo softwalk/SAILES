@@ -9,9 +9,12 @@
 - Auditoría tenant-safe append-only para CRM, policy, JIT, workflow y modelos; runtime sin escritura directa.
 - Migración 008 con RLS forzado y kit condicional para respetar fingerprints legacy/canónicos de 005–007.
 - Pruebas operativas de RLS cruzado, reinicio, replay, cadena de auditoría y soak shadow de cuatro horas.
-- Suite ampliada a 100 pruebas; distribución sigue fail-closed hasta completar los artefactos legales y de supply chain.
+- Suite ampliada a 101 pruebas; distribución sigue fail-closed hasta completar los artefactos legales y de supply chain.
 - El runner RC5 consume directamente las variables documentadas `ATLANTIS_MIGRATION_*`.
 - La reconciliación 006 ya registrada se verifica y nunca se vuelve a ejecutar.
+- Añadido instalador idempotente de Keycloak 26.7.2, fijado por commit y digest
+  OCI, para validar OIDC RS256 en shadow, aislado en loopback, ejecutado por image ID y sin secretos bootstrap en
+  el contenedor permanente; no sustituye el IdP productivo con MFA/TLS/HA.
 
 ## Unreleased — OpenRouter
 

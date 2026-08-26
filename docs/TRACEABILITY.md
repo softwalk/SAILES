@@ -18,7 +18,7 @@
 
 ## Pruebas automatizadas
 
-Las 100 pruebas cubren: REPEP, opt-in, hash de campaña, kill switch, JIT/replay, auditoría tenant, idempotencia, aprobación humana OIDC, Marketia, SalesGPT, fallback, PII, límites PostgreSQL, secretos, DSN, workload HMAC, E.164, scoring, retry/DLQ, restore durable, SSRF, transportes, prompt injection, webhooks, presupuesto acumulado y migraciones.
+Las 101 pruebas cubren: REPEP, opt-in, hash de campaña, kill switch, JIT/replay, auditoría tenant, idempotencia, aprobación humana OIDC, Keycloak shadow aislado, Marketia, SalesGPT, fallback, PII, límites PostgreSQL, secretos, DSN, workload HMAC, E.164, scoring, retry/DLQ, restore durable, SSRF, transportes, prompt injection, webhooks, presupuesto acumulado y migraciones.
 
 ## Definition of Done del incremento 0.2
 

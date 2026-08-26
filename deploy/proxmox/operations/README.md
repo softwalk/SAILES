@@ -63,7 +63,25 @@ sudo deploy/proxmox/operations/run_rc5_rollout.sh \
 
 La secuencia es: preflight → secretos → dump → migraciones/reconciliaciones 004–008 → build → despliegue shadow → pruebas → evidencias.
 
-Después del rollout y con OIDC activo:
+### Acelerador OIDC exclusivamente técnico en shadow
+
+Cuando todavía no esté disponible el IdP corporativo, RC5 puede levantar un
+Keycloak 26.7.2 temporal, sólo en `127.0.0.1:8180`, para probar criptográficamente
+issuer, audience, firma RS256, tenant, scopes y roles. El instalador exige el
+digest OCI fijado y además resuelve la imagen a su ID local inmutable; conserva el realm en un volumen dedicado, elimina el
+secreto bootstrap del contenedor permanente y borra los access tokens al terminar.
+
+```bash
+sudo deploy/proxmox/operations/03_setup_shadow_oidc_keycloak.sh --execute
+```
+
+Este comando reinicia únicamente CRM y orquestador, ejecuta automáticamente
+`80_validate_pilot_controls.sh` y mantiene `ATLANTIS_SHADOW_MODE=true`. Usa
+`start-dev` y password grant sólo para la validación técnica: **no satisface MFA,
+TLS/HA ni la aprobación del IdP de producción y no autoriza contacto real**.
+
+Después del rollout y con OIDC corporativo activo, o después de la validación
+técnica anterior:
 
 ```bash
 sudo deploy/proxmox/operations/80_validate_pilot_controls.sh --execute
@@ -98,7 +116,7 @@ El rollback de base de datos no es automático. Para restaurar `atlantis.dump` s
 - Compose resuelto antes del cambio.
 - Inventario de contenedores e imágenes anteriores.
 - Digests locales de la base y siete servicios RC5.
-- Healthchecks, 100 pruebas, shadow E2E y DR drill.
+- Healthchecks, 101 pruebas, shadow E2E y DR drill.
 - Evidencia de reinicio, RLS, anti-replay, cadena de auditoría y soak.
 - Estado RLS y políticas PostgreSQL.
 - Uso de recursos por contenedor.

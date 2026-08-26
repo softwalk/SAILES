@@ -7,6 +7,8 @@ Dependencias runtime declaradas por RC5:
 - psycopg 3.3.4 con extra `binary`: LGPL-3.0; requiere análisis de `psycopg-binary` y sus bibliotecas incluidas.
 - Pika 1.4.4: BSD-3-Clause.
 - LangGraph 1.2.11, biblioteca open source: MIT. Esto no incluye LangGraph Platform ni servicios comerciales.
+- Keycloak 26.7.2: Apache-2.0, como contenedor separado y opcional exclusivamente
+  para validación OIDC técnica en shadow. No se incorpora su código al propietario.
 
 Las versiones y hashes de artefactos PyPI, incluidas dependencias transitivas, están fijados en `deploy/proxmox/base/requirements-runtime.lock`. Los textos completos de licencia, digests de las imágenes finales y la attestation todavía deben incorporarse al paquete de distribución. No se consideran satisfechos por este aviso preliminar.
 

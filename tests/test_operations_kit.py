@@ -21,9 +21,10 @@ class OperationsKitTests(unittest.TestCase):
             "01_prepare_secret_permissions.sh", "10_backup.sh", "20_apply_migration_004.sh",
             "21_apply_migration_005.sh", "22_apply_migration_006.sh",
             "23_apply_migration_007.sh", "24_apply_migration_008.sh", "30_build_images.sh",
-            "40_deploy_shadow.sh", "60_rollback.sh", "80_validate_pilot_controls.sh", "90_shadow_soak.sh",
+            "03_setup_shadow_oidc_keycloak.sh", "40_deploy_shadow.sh", "60_rollback.sh",
+            "80_validate_pilot_controls.sh", "90_shadow_soak.sh",
         ):
-            result = subprocess.run([str(OPS / name)], capture_output=True, text=True)
+            result = subprocess.run(["bash", str(OPS / name)], capture_output=True, text=True)
             self.assertNotEqual(result.returncode, 0, name)
             self.assertIn("--execute", result.stderr + result.stdout)
 
@@ -102,6 +103,19 @@ ROLE:atlantis_suppression_admin:falsefalsefalsefalsefalsefalse
         self.assertIn("ATLANTIS_MIN_AVAILABLE_MEMORY_KIB", gate)
         self.assertIn("git -C", gate)
         self.assertIn("configured_providers", gate)
+
+    def test_shadow_keycloak_is_pinned_loopback_only_and_fail_closed(self):
+        setup = (OPS / "03_setup_shadow_oidc_keycloak.sh").read_text()
+        self.assertIn("quay.io/keycloak/keycloak:26.7.2", setup)
+        self.assertIn("sha256:831330513f55695572286e521f94fcd3c7e285250ed5b848090265a33192f669", setup)
+        self.assertNotIn("keycloak:latest", setup)
+        self.assertIn("127.0.0.1:8180:8080", setup)
+        self.assertIn('ATLANTIS_SHADOW_MODE=(true|"true")', setup)
+        self.assertIn('"ATLANTIS_REQUIRE_HUMAN_OIDC": "true"', setup)
+        self.assertIn("docker image inspect --format '{{.Id}}'", setup)
+        self.assertIn('docker pull "$image_ref"', setup)
+        self.assertIn('"$image_id" "${arguments[@]}"', setup)
+        self.assertIn("80_validate_pilot_controls.sh", setup)
 
 
 if __name__ == "__main__":

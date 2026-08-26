@@ -1,9 +1,9 @@
 last_verified: '2026-08-26'
-deployment_state: RC4 commit 38b3199 fue validado en VM 110 en modo SHADOW con
-  CRM PostgreSQL, OpenRouter/Kimi/DeepSeek, policy ALLOW, dispatch SHADOW_ACCEPTED,
-  replay JIT bloqueado y cero contactos externos. RC5 pasa 100/100 pruebas de fuente,
-  pero migración 008, OIDC real, pruebas de reinicio/RLS y soak aún deben ejecutarse
-  en la VM. Ocho digests OCI de la release desplegada estaban en MATCH.
+deployment_state: RC5 commit 04d7a98 fue desplegado sano en VM 110 en modo SHADOW;
+  migraciones 004-008, backup, secretos, PostgreSQL real y ocho digests OCI fueron
+  verificados. CRM y orquestador aún reportan identidad shadow-simulated. RC5 pasa
+  101/101 pruebas de fuente; faltan ejecutar OIDC técnico/control probe, soak de
+  cuatro horas y cerrar aprobaciones externas.
 blockers:
 - id: INFRA-001
   severity: P1
@@ -41,8 +41,8 @@ blockers:
 - id: LOCAL-008
   severity: P0
   status: open
-  note: Aplicar migración 008 y ejecutar el probe RC5 de RLS, auditoría, recuperación
-    de workflow y replay JIT después de reinicio en VM 110.
+  note: Migración 008 aplicada y validada; falta ejecutar el probe RC5 con OIDC de
+    RLS, auditoría, recuperación de workflow y replay JIT después de reinicio.
 - id: LOCAL-009
   severity: P0
   status: open
@@ -72,7 +72,8 @@ blockers:
 - id: EXT-006
   severity: P0
   status: open
-  note: 'Modelos Kimi/DeepSeek/OpenRouter: clave OpenRouter compartida fuera del gestor debe rotarse; modelo exacto, términos, DPIA/transferencia y proveedor aprobado pendientes.'
+  note: 'Modelos Kimi/DeepSeek/OpenRouter: clave OpenRouter rotada y almacenada como
+    secreto; modelo exacto, términos, DPIA/transferencia y proveedor aprobado pendientes.'
 - id: EXT-007
   severity: P1
   status: open
@@ -85,6 +86,7 @@ blockers:
 - id: EXT-009
   severity: P0
   status: open
-  note: Configurar IdP real RS256 y validar tokens humanos con scope, rol y tenant
-    para aprobación de campaña y acciones sensibles; no usar identidad simulada.
+  note: Ejecutar la validación técnica RS256 en shadow y después configurar el IdP
+    productivo con TLS, MFA, HA, backup y segregación. Keycloak start-dev/direct grant
+    sólo demuestra integración y no resuelve este bloqueo externo.
 notes: []

@@ -19,10 +19,14 @@
 
 ## Validado en el código fuente
 
-- 100 pruebas unitarias/de invariantes, E2E shadow/HTTP, DR, carga y gate de fuente.
+- 101 pruebas unitarias/de invariantes, E2E shadow/HTTP, DR, carga y gate de fuente.
 - Scripts para probar RLS cruzado, recuperación del orquestador, replay JIT tras reinicio y cadena de auditoría contra la VM real.
 - Soak shadow de cuatro horas con contactos externos en cero y llamadas sintéticas a modelos acotadas.
 
 ## Pendiente en la infraestructura real
 
-La palabra “terminado” para producción requiere aplicar la migración 008, configurar el IdP real, ejecutar las pruebas de reinicio/RLS/replay, completar el soak y cerrar `release/BLOCKERS.yaml`. Este entorno no tiene acceso a la VM ni a las aprobaciones de terceros. El sistema queda como release candidate en shadow, no como producto autorizado para contactar personas.
+La migración 008 ya fue aplicada en VM 110. La palabra “terminado” para producción
+todavía requiere configurar el IdP productivo, ejecutar el probe OIDC/reinicio/RLS/replay,
+completar el soak y cerrar `release/BLOCKERS.yaml`. Keycloak start-dev sólo acelera
+la comprobación técnica en shadow. El sistema sigue como release candidate, no como
+producto autorizado para contactar personas.

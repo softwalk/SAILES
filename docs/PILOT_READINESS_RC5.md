@@ -27,7 +27,30 @@ git rev-parse HEAD
 
 El árbol debe estar limpio. Copiar `deploy/proxmox/operations/rollout.env.example` a `/opt/atlantis/infrastructure/rc5-rollout.env`, completar valores y aplicar `root:root`, modo `0600`.
 
-## 2. OIDC humano real
+## 2. OIDC humano
+
+### Ruta rápida para cerrar la prueba técnica shadow
+
+Si el IdP corporativo aún no está disponible, ejecutar:
+
+```bash
+sudo deploy/proxmox/operations/03_setup_shadow_oidc_keycloak.sh --execute
+```
+
+El script usa Keycloak 26.7.2 fijado por commit y digest OCI, y lo ejecuta por el
+ID inmutable resuelto al instalar. Expone el IdP sólo en loopback, crea dos identidades separadas,
+emite tokens RS256 de cinco minutos, instala únicamente las claves públicas en
+Atlantis, activa OIDC en CRM/orquestador y ejecuta el probe de controles completo.
+El realm y sus credenciales técnicas quedan bajo
+`/opt/atlantis/infrastructure/oidc-shadow`, propiedad de root; los access tokens
+se eliminan automáticamente.
+
+Esta ruta usa `start-dev` y direct grant únicamente para SHADOW. Demuestra la
+integración técnica, pero no cumple el requisito externo de IdP productivo con
+TLS, MFA, alta disponibilidad, backup, segregación administrativa y ciclo de vida
+de usuarios. No permite cambiar `ATLANTIS_SHADOW_MODE` a `false`.
+
+### Ruta requerida para piloto autorizado
 
 Registrar dos permisos en el IdP:
 

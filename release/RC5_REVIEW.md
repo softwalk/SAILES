@@ -19,7 +19,7 @@ El código fuente queda **SHADOW READY**. El piloto permanece **NO GO** hasta ap
 ## Validación local
 
 - `compileall`: PASS;
-- pruebas unitarias/invariantes: 100/100 PASS;
+- pruebas unitarias/invariantes: 101/101 PASS;
 - shadow E2E, HTTP E2E y DR drill: PASS;
 - carga concurrente: supera la meta de 100/s en la máquina de validación;
 - compliance source: PASS;

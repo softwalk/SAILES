@@ -41,6 +41,19 @@ components:
     owner: Data
     distribution_mode: installed-infrastructure
     source_obligation: preserve-license
+  - name: keycloak-shadow-validation
+    kind: oci-image
+    repository: https://github.com/keycloak/keycloak
+    tag_or_revision: 26.7.2
+    commit: 289376b142480b4d600aca7acb1e4651862ed2a1
+    artifact_or_model_id: quay.io/keycloak/keycloak:26.7.2@sha256:831330513f55695572286e521f94fcd3c7e285250ed5b848090265a33192f669
+    digest: sha256:831330513f55695572286e521f94fcd3c7e285250ed5b848090265a33192f669
+    license_spdx: Apache-2.0
+    license_text_sha256: cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30
+    owner: Security
+    distribution_mode: separate-shadow-validation-container
+    source_obligation: preserve-license-and-notices; do-not-use-start-dev-for-production
+    license_source: https://github.com/keycloak/keycloak/blob/26.7.2/LICENSE.txt
   - name: psycopg
     kind: python-package
     repository: https://github.com/psycopg/psycopg
