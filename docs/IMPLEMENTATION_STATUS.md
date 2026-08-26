@@ -19,7 +19,7 @@
 
 ## Validado en el código fuente
 
-- 98 pruebas unitarias/de invariantes, E2E shadow/HTTP, DR, carga y gate de fuente.
+- 99 pruebas unitarias/de invariantes, E2E shadow/HTTP, DR, carga y gate de fuente.
 - Scripts para probar RLS cruzado, recuperación del orquestador, replay JIT tras reinicio y cadena de auditoría contra la VM real.
 - Soak shadow de cuatro horas con contactos externos en cero y llamadas sintéticas a modelos acotadas.
 

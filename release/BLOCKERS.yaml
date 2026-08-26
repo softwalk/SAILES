@@ -1,7 +1,7 @@
 last_verified: '2026-08-26'
 deployment_state: RC4 commit 38b3199 fue validado en VM 110 en modo SHADOW con
   CRM PostgreSQL, OpenRouter/Kimi/DeepSeek, policy ALLOW, dispatch SHADOW_ACCEPTED,
-  replay JIT bloqueado y cero contactos externos. RC5 pasa 98/98 pruebas de fuente,
+  replay JIT bloqueado y cero contactos externos. RC5 pasa 99/99 pruebas de fuente,
   pero migración 008, OIDC real, pruebas de reinicio/RLS y soak aún deben ejecutarse
   en la VM. Ocho digests OCI de la release desplegada estaban en MATCH.
 blockers:

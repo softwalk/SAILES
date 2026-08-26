@@ -53,6 +53,16 @@ class OperationsKitTests(unittest.TestCase):
         self.assertIn('require_file "$backup_dir/atlantis.dump"', migration)
         self.assertIn("security-critical", rollback)
 
+    def test_rc5_rollout_uses_documented_migration_environment_names(self):
+        rollout = (OPS / "run_rc5_rollout.sh").read_text()
+        env_example = (OPS / "rollout.env.example").read_text()
+        for name in (
+            "ATLANTIS_MIGRATION_APPROVED_BY", "ATLANTIS_MIGRATION_APPROVED_DATE",
+            "ATLANTIS_MIGRATION_EVIDENCE_REF", "ATLANTIS_MIGRATION_EVIDENCE_SHA256",
+        ):
+            self.assertIn(name, rollout)
+            self.assertIn(name, env_example)
+
     def test_migration_005_preserves_history_and_requires_approval(self):
         migration = (ROOT / "database/005_reconcile_migration_004_checksum.sql").read_text()
         self.assertNotIn("UPDATE schema_migration SET", migration)

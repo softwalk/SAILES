@@ -1,10 +1,10 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
-  "serialNumber": "urn:uuid:fcce36d6-6e53-45c3-8f05-6c7611424bbd",
+  "serialNumber": "urn:uuid:646ecbc5-e3a3-48a3-958a-27dea42d299c",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-08-26T11:33:36.897862+00:00",
+    "timestamp": "2026-08-26T16:40:41.322570+00:00",
     "component": {
       "type": "application",
       "name": "atlantis-autonomous-sales",

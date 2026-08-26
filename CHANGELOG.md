@@ -9,7 +9,8 @@
 - Auditoría tenant-safe append-only para CRM, policy, JIT, workflow y modelos; runtime sin escritura directa.
 - Migración 008 con RLS forzado y kit condicional para respetar fingerprints legacy/canónicos de 005–007.
 - Pruebas operativas de RLS cruzado, reinicio, replay, cadena de auditoría y soak shadow de cuatro horas.
-- Suite ampliada a 98 pruebas; distribución sigue fail-closed hasta completar los artefactos legales y de supply chain.
+- Suite ampliada a 99 pruebas; distribución sigue fail-closed hasta completar los artefactos legales y de supply chain.
+- El runner RC5 consume directamente las variables documentadas `ATLANTIS_MIGRATION_*`.
 
 ## Unreleased — OpenRouter
 

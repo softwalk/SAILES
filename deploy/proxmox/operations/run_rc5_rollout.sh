@@ -24,8 +24,14 @@ trap on_error ERR
 "$ops_dir/10_backup.sh" --execute
 "$ops_dir/20_apply_migration_004.sh" --execute
 "$ops_dir/21_apply_migration_005.sh" --execute
-migration_args=(--execute --approved-by "${APPROVED_BY:-}" --approved-date "${APPROVED_DATE:-}" --evidence-ref "${EVIDENCE_REF:-}")
-[[ -z "${EVIDENCE_SHA:-}" ]] || migration_args+=(--evidence-sha256 "$EVIDENCE_SHA")
+migration_args=(
+  --execute
+  --approved-by "${ATLANTIS_MIGRATION_APPROVED_BY:-}"
+  --approved-date "${ATLANTIS_MIGRATION_APPROVED_DATE:-}"
+  --evidence-ref "${ATLANTIS_MIGRATION_EVIDENCE_REF:-}"
+)
+[[ -z "${ATLANTIS_MIGRATION_EVIDENCE_SHA256:-}" ]] || \
+  migration_args+=(--evidence-sha256 "$ATLANTIS_MIGRATION_EVIDENCE_SHA256")
 "$ops_dir/22_apply_migration_006.sh" "${migration_args[@]}"
 "$ops_dir/23_apply_migration_007.sh" "${migration_args[@]}"
 "$ops_dir/24_apply_migration_008.sh" --execute

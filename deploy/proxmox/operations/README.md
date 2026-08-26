@@ -98,7 +98,7 @@ El rollback de base de datos no es automático. Para restaurar `atlantis.dump` s
 - Compose resuelto antes del cambio.
 - Inventario de contenedores e imágenes anteriores.
 - Digests locales de la base y siete servicios RC5.
-- Healthchecks, 98 pruebas, shadow E2E y DR drill.
+- Healthchecks, 99 pruebas, shadow E2E y DR drill.
 - Evidencia de reinicio, RLS, anti-replay, cadena de auditoría y soak.
 - Estado RLS y políticas PostgreSQL.
 - Uso de recursos por contenedor.
