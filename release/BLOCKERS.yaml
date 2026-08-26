@@ -1,8 +1,9 @@
-last_verified: '2026-08-23'
-deployment_state: Source-3 (ZIP v7) desplegado en VM 110 en modo SHADOW. 7 servicios
-  propietarios healthy en 127.0.0.1:8081-8087. Migraciones 004/005/006 consolidadas.
-  Git commit 4701a1f en github.com/softwalk/SAILES. 8 digests OCI (8/8 MATCH). PostgreSQL
-  con TLS (verify-full, TLSv1.3). RAM ~7.9 GiB efectivos. 65/65 tests PASS.
+last_verified: '2026-08-26'
+deployment_state: RC4 commit 38b3199 fue validado en VM 110 en modo SHADOW con
+  CRM PostgreSQL, OpenRouter/Kimi/DeepSeek, policy ALLOW, dispatch SHADOW_ACCEPTED,
+  replay JIT bloqueado y cero contactos externos. RC5 pasa 98/98 pruebas de fuente,
+  pero migración 008, OIDC real, pruebas de reinicio/RLS y soak aún deben ejecutarse
+  en la VM. Ocho digests OCI de la release desplegada estaban en MATCH.
 blockers:
 - id: INFRA-001
   severity: P1
@@ -37,6 +38,16 @@ blockers:
   severity: P0
   status: resolved
   note: 'Capacidad del host: RAM mejorada a ~7.9 GiB efectivos (gate de RAM PASS).'
+- id: LOCAL-008
+  severity: P0
+  status: open
+  note: Aplicar migración 008 y ejecutar el probe RC5 de RLS, auditoría, recuperación
+    de workflow y replay JIT después de reinicio en VM 110.
+- id: LOCAL-009
+  severity: P0
+  status: open
+  note: Completar soak shadow continuo de al menos 240 minutos, cero fallos y cero
+    contactos externos; conservar JSONL y SHA-256.
 - id: EXT-001
   severity: P0
   status: open
@@ -71,4 +82,9 @@ blockers:
   status: open
   note: 'Distribución/licencias/SBOM: licencias de terceros, SBOM completo, distribución
     a clientes.'
+- id: EXT-009
+  severity: P0
+  status: open
+  note: Configurar IdP real RS256 y validar tokens humanos con scope, rol y tenant
+    para aprobación de campaña y acciones sensibles; no usar identidad simulada.
 notes: []

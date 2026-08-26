@@ -6,19 +6,19 @@
 | campaign-orchestration | `CRMStore` versiona, hashea, aprueba e invalida cambios | MVP probado |
 | conversation-engine | `SalesGPTPolicy` bloquea efectos, opt-out y sensibilidad | MVP probado; falta SalesGPT real |
 | compliance-governance | PolicyEngine + JIT + replay + razones | MVP probado |
-| workflow-orchestration | WorkflowEngine, API HTTP, checkpoints, humano, outbox, idempotencia | MVP probado; falta runtime LangGraph |
-| model-routing | Redacción, clasificación, fallback, schema y presupuesto | MVP probado; faltan cuentas/model IDs aprobados |
+| workflow-orchestration | WorkflowEngine, API HTTP, checkpoints PostgreSQL, humano OIDC, outbox, idempotencia y recuperación tras reinicio | MVP durable; falta decidir adopción del runtime LangGraph |
+| model-routing | Redacción, clasificación, fallback, schema, reserva diaria durable y auditoría | MVP probado; proveedor/modelo requieren aprobación formal |
 | channel-voice | API, verificación de token, consumo PostgreSQL y shadow mode | Parcial; falta control en Asterisk originate |
 | channel-whatsapp | API, token, firma Meta, challenge, deduplicación y shadow mode | Parcial; falta envío Meta real |
 | marketia-integration | Contrato allowlist y campos protegidos | MVP probado; falta API Marketia |
 | crm-memory | Esquema, repositorio dev y repositorio PostgreSQL con RLS contextual | Parcial; falta prueba en PostgreSQL real |
-| security-observability | Hash de auditoría, separación, minimización básica | Parcial; faltan OIDC/mTLS/OTel/KMS |
+| security-observability | OIDC humano, HMAC workload, auditoría append-only, RLS, minimización | Parcial; faltan mTLS/OTel/KMS y pentest externo |
 | license-compliance | Proceso GPL externo y gate fuente/distribución | MVP probado |
 | supply-chain-governance | Scanner de código y distribución fail-closed | MVP probado; lock sigue bloqueado |
 
 ## Pruebas automatizadas
 
-Las 40 pruebas cubren: REPEP, opt-in, hash de campaña, kill switch, JIT/replay, auditoría tenant, idempotencia, aprobación humana, Marketia, SalesGPT, fallback, PII, PostgreSQL boundaries, secretos por archivo, DSN seguro, OIDC, workload HMAC, E.164, scoring, sensibilidad, retry/DLQ, circuit breaker, restore, SSRF, transportes, prompt injection, webhooks y migraciones.
+Las 98 pruebas cubren: REPEP, opt-in, hash de campaña, kill switch, JIT/replay, auditoría tenant, idempotencia, aprobación humana OIDC, Marketia, SalesGPT, fallback, PII, límites PostgreSQL, secretos, DSN, workload HMAC, E.164, scoring, retry/DLQ, restore durable, SSRF, transportes, prompt injection, webhooks, presupuesto acumulado y migraciones.
 
 ## Definition of Done del incremento 0.2
 

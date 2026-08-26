@@ -32,9 +32,6 @@ done
 fail() { echo "FAIL 006: $*" >&2; exit 1; }
 
 [[ "$EXECUTE" == "1" ]] || fail "debe pasar --execute (aplicación explícita)"
-[[ -n "$APPROVED_BY" ]] || fail "aprobador humano obligatorio (--approved-by)"
-[[ "$APPROVED_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || fail "fecha aprobación obligatoria (--approved-date YYYY-MM-DD)"
-[[ -n "$EVIDENCE_REF" ]] || fail "referencia de evidencia obligatoria (--evidence-ref)"
 
 SQL="$REPO_DIR/database/006_reconcile_migration_005_applied_checksum.sql"
 [[ -f "$SQL" ]] || fail "no existe $SQL"
@@ -42,7 +39,12 @@ SQL="$REPO_DIR/database/006_reconcile_migration_005_applied_checksum.sql"
 # --- Condicional: ¿005 está registrada como 853d8622 (existente) o 5ba50e9c (nueva)? ---
 CK005_REGISTERED=$(database_psql -Atqc "SELECT checksum FROM schema_migration WHERE version='005_reconcile_migration_004_checksum'" 2>/dev/null || true)
 if [[ -z "$CK005_REGISTERED" ]]; then
-  fail "migration 005 no registrada: aplique 005 antes de 006"
+  CK004_REGISTERED=$(database_psql -Atqc "SELECT checksum FROM schema_migration WHERE version='004_security_and_durability'" 2>/dev/null || true)
+  if [[ "$CK004_REGISTERED" == "f07309b514f1fb1bb4546a3c09712123b45de255c202e25b9f6c098d6eb3ba2e" ]]; then
+    echo "SKIP 006: migration 004 es canónica y 005 no aplica."
+    exit 0
+  fi
+  fail "migration 005 no registrada y migration 004 no es canónica"
 fi
 if [[ "$CK005_REGISTERED" == "5ba50e9c2e465eea7e65a8c47f0ae89d2791e498ddd02c95c6dda04fa9e91d8d" ]]; then
   echo "SKIP 006: migration 005 ya registrada con checksum corregido (instalación nueva). 006 no aplica."
@@ -52,6 +54,9 @@ if [[ "$CK005_REGISTERED" != "853d86220033dff82930c9e8e91589b6602eba6b00a43c7957
   fail "unexpected migration 005 checksum: $CK005_REGISTERED"
 fi
 echo "005 registrada como 853d8622 (existente) -> 006 aplica."
+[[ -n "$APPROVED_BY" ]] || fail "aprobador humano obligatorio (--approved-by)"
+[[ "$APPROVED_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || fail "fecha aprobación obligatoria (--approved-date YYYY-MM-DD)"
+[[ -n "$EVIDENCE_REF" ]] || fail "referencia de evidencia obligatoria (--evidence-ref)"
 
 # --- Backup PostgreSQL REAL y obligatorio (dump + checksum + verificación) ---
 TS=$(date +%Y%m%d_%H%M%S)

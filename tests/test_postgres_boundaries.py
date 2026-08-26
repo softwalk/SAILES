@@ -25,7 +25,7 @@ class PostgresBoundaryTests(unittest.TestCase):
     def test_atomic_token_consume_sets_tenant_and_conditions(self):
         cursor = FakeCursor()
         repository = token_db.PostgresTokenConsumer(lambda: FakeConnection(cursor))
-        claims = SimpleNamespace(tenant_id="tenant-1")
+        claims = SimpleNamespace(tenant_id="tenant-1", decision_id="00000000-0000-0000-0000-000000000001")
         self.assertTrue(repository.consume("jti-1", claims))
         self.assertIn("set_config('app.tenant_id', %s, true)", cursor.calls[0][0])
         self.assertEqual(("tenant-1",), cursor.calls[0][1])
@@ -33,6 +33,7 @@ class PostgresBoundaryTests(unittest.TestCase):
         self.assertIn("consumed_at IS NULL", update)
         self.assertIn("revoked_at IS NULL", update)
         self.assertIn("expires_at > now()", update)
+        self.assertIn("append_audit_event", cursor.calls[2][0])
 
 
 if __name__ == "__main__": unittest.main()

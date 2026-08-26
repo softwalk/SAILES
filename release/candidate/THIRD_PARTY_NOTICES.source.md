@@ -2,7 +2,7 @@
 
 Este repositorio no incorpora código fuente ni binarios de OpenOutreach, VICIdial, Node-RED, LangGraph, RabbitMQ, Kimi, DeepSeek, Evolution API o n8n. El Dockerfile de la imagen base sí declara la instalación futura de dependencias desde PyPI.
 
-Dependencias runtime declaradas por RC4:
+Dependencias runtime declaradas por RC5:
 
 - psycopg 3.3.4 con extra `binary`: LGPL-3.0; requiere análisis de `psycopg-binary` y sus bibliotecas incluidas.
 - Pika 1.4.4: BSD-3-Clause.

@@ -7,9 +7,9 @@ readonly ATLANTIS_ROOT="${ATLANTIS_ROOT:-/opt/atlantis}"
 readonly ATLANTIS_COMPOSE_FILE="${ATLANTIS_COMPOSE_FILE:-$REPO_DIR/deploy/proxmox/compose.application.yaml}"
 readonly ATLANTIS_ENV_FILE="${ATLANTIS_ENV_FILE:-$ATLANTIS_ROOT/infrastructure/.env}"
 readonly ATLANTIS_SECRET_DIR="${ATLANTIS_SECRET_DIR:-$ATLANTIS_ROOT/secrets}"
-readonly ATLANTIS_BACKUP_ROOT="${ATLANTIS_BACKUP_ROOT:-$ATLANTIS_ROOT/backups/rc4}"
-readonly ATLANTIS_EVIDENCE_ROOT="${ATLANTIS_EVIDENCE_ROOT:-$ATLANTIS_ROOT/documentation/evidence/rc4}"
-readonly ATLANTIS_RELEASE="0.9.0-rc4"
+readonly ATLANTIS_BACKUP_ROOT="${ATLANTIS_BACKUP_ROOT:-$ATLANTIS_ROOT/backups/rc5}"
+readonly ATLANTIS_EVIDENCE_ROOT="${ATLANTIS_EVIDENCE_ROOT:-$ATLANTIS_ROOT/documentation/evidence/rc5}"
+readonly ATLANTIS_RELEASE="0.9.0-rc5"
 
 log() { printf '%s %s\n' "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" "$*"; }
 die() { log "FAIL $*" >&2; exit 1; }

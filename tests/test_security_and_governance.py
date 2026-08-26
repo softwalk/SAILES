@@ -2,11 +2,12 @@ import base64
 import json
 import time
 import unittest
+from uuid import uuid4
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 from _load import load
-from atlantis_contracts import RS256TokenVerifier, WorkloadRequestVerifier, normalize_e164, phone_token
+from atlantis_contracts import HumanOIDCAuthenticator, RS256TokenVerifier, WorkloadRequestVerifier, normalize_e164, phone_token
 from atlantis_contracts.security import sign_workload_request
 
 leads = load("atlantis_leads", "services/agent_adapters/app/lead_intelligence.py")
@@ -38,11 +39,37 @@ class SecurityGovernanceTests(unittest.TestCase):
         public = key.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
         header = b64(json.dumps({"alg":"RS256","typ":"JWT","kid":"k1"}, separators=(",",":")).encode())
         payload = b64(json.dumps({"iss":"https://id.example","aud":"atlantis","sub":"u1","tenant_id":"t1",
-                                  "scope":"campaign:approve","roles":["APPROVER"],"exp":2000,"nbf":900}, separators=(",",":")).encode())
+                                  "scope":"campaign:approve","roles":["APPROVER"],"iat":950,
+                                  "exp":2000,"nbf":900}, separators=(",",":")).encode())
         signature = b64(key.sign(f"{header}.{payload}".encode(), padding.PKCS1v15(), hashes.SHA256()))
         principal = RS256TokenVerifier("https://id.example", "atlantis", {"k1": public}).verify(f"{header}.{payload}.{signature}", now=1000)
         principal.require("campaign:approve", role="APPROVER")
         self.assertEqual(principal.tenant_id, "t1")
+
+    def test_human_approval_requires_oidc_scope_role_and_matching_tenant(self):
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import padding, rsa
+        key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        public = key.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
+        tenant_id, subject = str(uuid4()), str(uuid4())
+        header = b64(json.dumps({"alg":"RS256","typ":"JWT","kid":"k1"}, separators=(",",":")).encode())
+        payload = b64(json.dumps({
+            "iss":"https://id.example", "aud":"atlantis", "sub":subject, "tenant_id":tenant_id,
+            "scope":"campaign:approve", "roles":["CAMPAIGN_APPROVER"],
+            "iat":int(time.time()) - 10, "exp":int(time.time()) + 600, "nbf":int(time.time()) - 10,
+        }, separators=(",",":")).encode())
+        signature = b64(key.sign(f"{header}.{payload}".encode(), padding.PKCS1v15(), hashes.SHA256()))
+        token = f"{header}.{payload}.{signature}"
+        auth = HumanOIDCAuthenticator(
+            RS256TokenVerifier("https://id.example", "atlantis", {"k1": public}),
+            "campaign:approve", "CAMPAIGN_APPROVER",
+        )
+        principal = auth.authenticate({"authorization": "Bearer " + token}, tenant_id)
+        self.assertEqual(principal.subject, subject)
+        with self.assertRaisesRegex(PermissionError, "TENANT_MISMATCH"):
+            auth.authenticate({"authorization": "Bearer " + token}, str(uuid4()))
+        with self.assertRaisesRegex(PermissionError, "BEARER_REQUIRED"):
+            auth.authenticate({}, tenant_id)
 
     def test_repep_snapshot_hash_and_lookup(self):
         raw = b"token-a\ntoken-b\n"

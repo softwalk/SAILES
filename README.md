@@ -1,4 +1,4 @@
-# Atlantis Autonomous Sales Platform — Release Candidate 0.9.0-rc4
+# Atlantis Autonomous Sales Platform — Release Candidate 0.9.0-rc5
 
 Implementación de referencia del OpenSpec v1.2. El repositorio entrega un release candidate ejecutable para campaña, aprobación humana, cumplimiento fail-closed, autorización JIT, orquestación durable, proveedores intercambiables y adaptadores aislados.
 
@@ -53,7 +53,7 @@ python3 tools/compliance_gate.py --mode source
 
 Para la infraestructura instalada, comenzar por `docs/INFRASTRUCTURE_ALIGNMENT.md` y `docs/PROXMOX_DEPLOYMENT.md`. El inventario ejecutable está en `deploy/proxmox/inventory.yaml`; no usar el compose de laboratorio sobre VM 110.
 
-El rollout controlado de RC4 está en `deploy/proxmox/operations/README.md`. Incluye preflight, backup, migración 004, build, despliegue shadow, validación, evidencias y rollback de imágenes. Ningún script habilita contacto real.
+El rollout controlado de RC5 está en `deploy/proxmox/operations/README.md`. Incluye preflight, backup, migraciones hasta 008, build, despliegue shadow, pruebas de persistencia/replay, soak de cuatro horas, evidencias y rollback de imágenes. Ningún script habilita contacto real.
 
 La entrega ZIP v7 añade reconciliación append-only de la migración 004 y un gate técnico de piloto con comprobación TLS real, RAM, Git, imágenes y modelos. La migración 005 no se aplica sin aprobador humano nominativo.
 

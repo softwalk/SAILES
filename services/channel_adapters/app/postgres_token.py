@@ -28,11 +28,20 @@ class PostgresTokenConsumer:
                        RETURNING id""",
                     (claims.tenant_id, nonce_hash),
                 )
-                return cursor.fetchone() is not None
+                consumed = cursor.fetchone()
+                if consumed is None:
+                    return False
+                cursor.execute(
+                    """SELECT app.append_audit_event(%s,'SERVICE',%s,'JIT_CONSUMED',
+                              'OUTBOUND_AUTHORIZATION',%s,%s,%s::jsonb,%s)""",
+                    (claims.tenant_id, "channel-adapter", jti, claims.decision_id,
+                     '["FIRST_USE"]', claims.decision_id),
+                )
+                return True
 
 
 class ShadowFirstUseConsumer:
-    """Local-only fallback. Forbidden when shadow mode is disabled."""
+    """Local-only fallback. Forbidden whenever PostgreSQL is configured."""
     def __init__(self): self.seen = set()
 
     def consume(self, jti, claims=None):

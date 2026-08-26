@@ -1,7 +1,7 @@
 """Persist policy decisions required by the PostgreSQL authorization ledger."""
 import json
 from datetime import timedelta
-from uuid import NAMESPACE_URL, uuid5
+from uuid import NAMESPACE_URL, UUID, uuid5
 
 from atlantis_contracts import DecisionOutcome
 
@@ -66,5 +66,16 @@ class PostgresDecisionRepository:
                         decision.policy_version, request.content_hash, decision.decided_at,
                         expires_at, intent_id,
                     ),
+                )
+                correlation_id = request.metadata.get("correlation_id") or decision.decision_id
+                try:
+                    correlation_id = str(UUID(str(correlation_id)))
+                except (ValueError, TypeError, AttributeError):
+                    correlation_id = decision.decision_id
+                cursor.execute(
+                    """SELECT app.append_audit_event(%s,'SERVICE','policy-gateway','POLICY_DECIDED',
+                              'CONTACTABILITY_DECISION',%s,%s,%s::jsonb,%s)""",
+                    (request.tenant_id, decision.decision_id, decision.decision_id,
+                     json.dumps(list(decision.reason_codes)), correlation_id),
                 )
         return intent_id

@@ -6,7 +6,7 @@ La fase conecta los límites que en 0.1 existían sólo como clases de dominio. 
 
 ## Configuraciones de almacenamiento
 
-- `ATLANTIS_CRM_STORAGE=memory`: únicamente laboratorio/desarrollo; el overlay Proxmox RC4 usa PostgreSQL.
+- `ATLANTIS_CRM_STORAGE=memory`: únicamente laboratorio/desarrollo; el overlay Proxmox RC5 usa PostgreSQL.
 - `ATLANTIS_CRM_STORAGE=postgres`: exige `ATLANTIS_DATABASE_URL` y un driver psycopg instalado desde un lock aprobado.
 - Policy Gateway usa PostgreSQL automáticamente cuando existe `ATLANTIS_DATABASE_URL`; fuera de shadow no acepta ledger en memoria.
 - Los adaptadores consumen la autorización directamente en PostgreSQL fuera de shadow. La transición a producción sigue bloqueada porque los transportes reales aún no están aprobados.

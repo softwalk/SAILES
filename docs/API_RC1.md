@@ -17,7 +17,7 @@ Todas las operaciones mutables requieren `Idempotency-Key` de 16–128 caractere
 | Policy | `POST /v1/outbound-authorizations` | Sólo decisión ALLOW vigente |
 | Orquestador | `POST /v1/runs` | Workflow fijado |
 | Orquestador | `POST /v1/runs/transition` | Evento único |
-| Orquestador | `POST /v1/human-actions/decide` | OIDC/rol aprobador en gateway |
+| Orquestador | `POST /v1/human-actions/decide` | Bearer OIDC RS256, `human-action:decide`, rol y tenant |
 | Model | `POST /v1/models/complete` | Clasificación y presupuesto |
 | Voz | `POST /v1/voice/calls` | Token JIT, PostgreSQL y provider configurado |
 | WhatsApp | `POST /v1/whatsapp/messages` | Token JIT y Meta Cloud API |
@@ -26,6 +26,9 @@ Todas las operaciones mutables requieren `Idempotency-Key` de 16–128 caractere
 
 El modelo de errores es JSON `{ "error": "REASON_CODE" }`. Denegaciones de autenticación/política usan 403, replay/conflictos 409, payload excesivo 413 y proveedor no disponible 503.
 
-La operación de aprobación debe publicarse detrás del gateway OIDC con el scope
-`campaign:approve`. La firma HMAC entre servicios autentica al workload, pero no
-sustituye la identidad ni el rol del aprobador humano.
+La aprobación CRM exige directamente un Bearer OIDC RS256 con scope
+`campaign:approve`, rol `CAMPAIGN_APPROVER` y el mismo tenant. La decisión de una
+acción exige `human-action:decide` y `HUMAN_REVIEWER`. El `actor_id` enviado en el
+body sólo existe para simulación shadow sin OIDC y no tiene autoridad cuando OIDC
+está activo. La firma HMAC autentica al workload, pero nunca sustituye la identidad
+del humano.

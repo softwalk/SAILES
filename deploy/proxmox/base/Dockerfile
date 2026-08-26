@@ -27,5 +27,5 @@ RUN pip install --no-cache-dir --require-hashes -r /tmp/requirements-runtime.loc
 RUN python -c "import psycopg, pika, langgraph; print('atlantis-python-base deps ok')"
 
 LABEL org.opencontainers.image.title="atlantis-python-base" \
-      org.opencontainers.image.version="0.9.0-rc4" \
-      org.opencontainers.image.description="Python 3.12 + psycopg/pika/langgraph con hashes para Atlantis RC 0.9.0-rc4"
+      org.opencontainers.image.version="0.9.0-rc5" \
+      org.opencontainers.image.description="Python 3.12 + psycopg/pika/langgraph con hashes para Atlantis RC 0.9.0-rc5"

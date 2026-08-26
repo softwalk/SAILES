@@ -34,7 +34,7 @@ dsn = postgres_dsn()
 if not shadow and not dsn:
     raise RuntimeError("POSTGRES_REQUIRED_OUTSIDE_SHADOW_MODE")
 
-consumer = PostgresTokenConsumer.from_dsn(dsn) if dsn and not shadow else ShadowFirstUseConsumer()
+consumer = PostgresTokenConsumer.from_dsn(dsn) if dsn else ShadowFirstUseConsumer()
 jit_secret = secret("ATLANTIS_JIT_SECRET", required=mode in {"voice", "whatsapp"})
 verifier = TokenVerifier(jit_secret, os.getenv("ATLANTIS_TOKEN_ISSUER", "atlantis-policy-gateway"), consumer.consume) if jit_secret else None
 router = JsonRouter(service_name=mode + "-adapter")

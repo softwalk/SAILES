@@ -1,6 +1,6 @@
-# Kit de despliegue RC4 — VM 110
+# Kit de despliegue RC5 — VM 110
 
-Este directorio automatiza un despliegue controlado de RC4 en `atlantis-core` (`192.168.100.160`). No activa contacto real, no modifica VM 102 y no supera el gate legal de distribución.
+Este directorio automatiza un despliegue controlado de RC5 en `atlantis-core` (`192.168.100.160`). No activa contacto real, no modifica VM 102 y no supera el gate legal de distribución.
 
 ## Controles de seguridad
 
@@ -9,6 +9,9 @@ Este directorio automatiza un despliegue controlado de RC4 en `atlantis-core` (`
 - Preflight exige al menos 7 GiB de RAM efectiva y 10 GiB libres.
 - Se exige backup PostgreSQL válido antes de migrar o desplegar.
 - Migración 004 se verifica por SHA-256; un checksum legacy sólo se acepta mediante migración 005 aprobada y fingerprint vigente.
+- La ruta legacy verifica 006 y 007 sin reescribir su historia; 008 añade controles durables y RLS.
+- Los endpoints humanos requieren OIDC RS256 para superar el gate de piloto.
+- El probe reinicia orquestador y voz para demostrar persistencia y anti-replay.
 - El rollback cambia sólo imágenes de aplicación. No revierte la migración 004 porque es aditiva y corrige un fallo de seguridad.
 - Los secretos nunca se imprimen en los reportes.
 
@@ -16,7 +19,7 @@ Este directorio automatiza un despliegue controlado de RC4 en `atlantis-core` (`
 
 1. Crear snapshot de VM 110 desde Proxmox. Este paso no puede ejecutarse desde la VM invitada.
 2. Copiar el repositorio a `/opt/atlantis/repositories/atlantis-sales-platform`.
-3. Copiar `rollout.env.example` a `/opt/atlantis/infrastructure/rc4-rollout.env`.
+3. Copiar `rollout.env.example` a `/opt/atlantis/infrastructure/rc5-rollout.env`.
    El archivo debe ser propiedad de `root` y tener modo `0600` o `0400`.
 4. Completar `/opt/atlantis/infrastructure/.env`, manteniendo:
 
@@ -25,6 +28,8 @@ Este directorio automatiza un despliegue controlado de RC4 en `atlantis-core` (`
    - `ATLANTIS_REQUIRE_DURABLE_STATE=true`
    - `ATLANTIS_CRM_STORAGE=postgres`
    - `ATLANTIS_DATABASE_SSLMODE=verify-full`
+   - `ATLANTIS_REQUIRE_HUMAN_OIDC=true` una vez configurado el IdP
+   - `ATLANTIS_REQUIRE_COMPLETED_SOAK=true`
 
 5. Crear todos los archivos listados por `01_validate_secrets.sh`. El rollout los deja `0400`, propiedad del uid 10001, y cada contenedor sólo monta los secretos que necesita; se eliminó el acceso grupal compartido. Los certificados deben provenir de la CA interna autorizada. No generar certificados autofirmados improvisados para piloto.
    Para OpenRouter, guardar la clave rotada exclusivamente en
@@ -32,7 +37,8 @@ Este directorio automatiza un despliegue controlado de RC4 en `atlantis-core` (`
    Compose, Git, prompts o reportes. Configurar un `OPENROUTER_MODEL_ID` exacto
    y aprobado; `UNSET` mantiene el proveedor deshabilitado de forma segura.
 6. Confirmar que `PYTHON_BASE_IMAGE` contiene un digest `@sha256:...`.
-7. Si la VM conserva el checksum legacy de 004, completar en `rc4-rollout.env` el aprobador, fecha y archivo de evidencia para la migración 005. Nunca usar un nombre genérico o automatizado como aprobador.
+7. Si la VM conserva checksums legacy, completar en `rc5-rollout.env` el aprobador, fecha y archivo de evidencia para las migraciones de reconciliación. Nunca usar un nombre genérico o automatizado como aprobador.
+8. Instalar el mapa de claves públicas OIDC en `/opt/atlantis/infrastructure/oidc/public_keys.json`; no se guardan claves privadas en Atlantis.
 
 ## Ejecución
 
@@ -41,7 +47,7 @@ Primero ejecutar sólo validaciones:
 ```bash
 cd /opt/atlantis/repositories/atlantis-sales-platform
 set -a
-source /opt/atlantis/infrastructure/rc4-rollout.env
+source /opt/atlantis/infrastructure/rc5-rollout.env
 set +a
 deploy/proxmox/operations/00_preflight.sh
 sudo deploy/proxmox/operations/01_prepare_secret_permissions.sh --execute
@@ -51,11 +57,21 @@ sudo deploy/proxmox/operations/01_validate_secrets.sh
 Después de revisar los resultados:
 
 ```bash
-sudo deploy/proxmox/operations/run_rc4_rollout.sh \
-  /opt/atlantis/infrastructure/rc4-rollout.env --execute
+sudo deploy/proxmox/operations/run_rc5_rollout.sh \
+  /opt/atlantis/infrastructure/rc5-rollout.env --execute
 ```
 
-La secuencia es: preflight → secretos → dump → migración 004 → reconciliación 005 cuando aplique → build → despliegue shadow → pruebas → evidencias.
+La secuencia es: preflight → secretos → dump → migraciones/reconciliaciones 004–008 → build → despliegue shadow → pruebas → evidencias.
+
+Después del rollout y con OIDC activo:
+
+```bash
+sudo deploy/proxmox/operations/80_validate_pilot_controls.sh --execute
+sudo deploy/proxmox/operations/90_shadow_soak.sh --execute 240
+sudo deploy/proxmox/operations/00_preflight_pilot_gate.sh
+```
+
+El primer comando verifica RLS cruzado, auditoría append-only, recuperación del workflow y replay JIT después de reiniciar contenedores. El segundo mantiene cuatro horas de shadow, sin contacto externo y con máximo 16 llamadas sintéticas de 300 unidades.
 
 Después de resolver RAM, TLS, Git, imágenes y modelos, ejecutar el gate técnico:
 
@@ -71,7 +87,7 @@ Si falla la aplicación después del despliegue:
 
 ```bash
 sudo deploy/proxmox/operations/60_rollback.sh --execute \
-  /opt/atlantis/backups/rc4/<timestamp>
+  /opt/atlantis/backups/rc5/<timestamp>
 ```
 
 El rollback de base de datos no es automático. Para restaurar `atlantis.dump` se requiere ventana de mantenimiento, aprobación humana y procedimiento de recuperación probado. La migración 004 debe conservarse salvo dictamen de seguridad contrario.
@@ -81,8 +97,9 @@ El rollback de base de datos no es automático. Para restaurar `atlantis.dump` s
 - Dump PostgreSQL y checksum.
 - Compose resuelto antes del cambio.
 - Inventario de contenedores e imágenes anteriores.
-- Digests locales de la base y siete servicios RC4.
-- Healthchecks, 84 pruebas, shadow E2E y DR drill.
+- Digests locales de la base y siete servicios RC5.
+- Healthchecks, 98 pruebas, shadow E2E y DR drill.
+- Evidencia de reinicio, RLS, anti-replay, cadena de auditoría y soak.
 - Estado RLS y políticas PostgreSQL.
 - Uso de recursos por contenedor.
 - Copia de bloqueos y SBOM de fuente.

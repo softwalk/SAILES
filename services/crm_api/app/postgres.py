@@ -29,6 +29,15 @@ class PostgresCRMRepository:
                 cursor.execute("SELECT set_config('app.tenant_id', %s, true)", (tenant_id,))
                 yield cursor
 
+    @staticmethod
+    def _audit(cursor, tenant_id: str, actor_type: str, actor_id: str, action: str,
+               resource_type: str, resource_id: str, correlation_id: str, reasons=None):
+        cursor.execute(
+            "SELECT app.append_audit_event(%s,%s,%s,%s,%s,%s,NULL,%s::jsonb,%s)",
+            (tenant_id, actor_type, actor_id, action, resource_type, resource_id,
+             json.dumps(reasons or []), correlation_id),
+        )
+
     def create_contact(self, tenant_id: str, data: dict) -> dict:
         contact_id = data.get("id", str(uuid4()))
         with self._cursor(tenant_id) as cursor:
@@ -39,7 +48,10 @@ class PostgresCRMRepository:
                 (contact_id, tenant_id, data.get("display_name"), data.get("company_name"),
                  data.get("phone_token"), data.get("lifecycle_stage", "DISCOVERED")),
             )
-            return self._row(cursor)
+            record = self._row(cursor)
+            self._audit(cursor, tenant_id, "SERVICE", "crm-api", "CONTACT_CREATED",
+                        "CONTACT", contact_id, contact_id)
+            return record
 
     def create_campaign_version(self, tenant_id: str, campaign_id: str, manifest: dict) -> dict:
         version_id = str(uuid4())
@@ -79,6 +91,8 @@ class PostgresCRMRepository:
                    VALUES (%s,%s,%s,'CAMPAIGN_MANIFEST',%s::jsonb,%s)""",
                 (str(uuid4()), tenant_id, version_id, json.dumps(manifest), manifest_hash),
             )
+            self._audit(cursor, tenant_id, "SERVICE", "crm-api", "CAMPAIGN_VERSION_CREATED",
+                        "CAMPAIGN_VERSION", version_id, version_id)
             return record
 
     def approve_campaign(self, tenant_id: str, version_id: str, approver_id: str, subject_hash: str,
@@ -105,7 +119,10 @@ class PostgresCRMRepository:
                    RETURNING id,tenant_id,campaign_id,version_no,status,purpose,artifact_hash AS manifest_hash,created_by""",
                 (version_id, tenant_id, subject_hash),
             )
-            return self._row(cursor)
+            record = self._row(cursor)
+            self._audit(cursor, tenant_id, "USER", approver_id, "CAMPAIGN_VERSION_APPROVED",
+                        "CAMPAIGN_VERSION", version_id, version_id)
+            return record
 
     def grant_consent(self, tenant_id: str, data: dict) -> dict:
         consent_id = str(uuid4())
@@ -120,7 +137,10 @@ class PostgresCRMRepository:
                  data["capture_source"], data.get("notice_version"), data.get("evidence_uri"),
                  data["evidence_hash"], data["captured_at"], data.get("valid_until")),
             )
-            return self._row(cursor)
+            record = self._row(cursor)
+            self._audit(cursor, tenant_id, "SERVICE", "crm-api", "CONSENT_GRANTED",
+                        "CONSENT", consent_id, str(data.get("correlation_id") or consent_id))
+            return record
 
     def suppress(self, tenant_id: str, data: dict) -> dict:
         if data.get("scope", "TENANT") == "GLOBAL":
@@ -136,7 +156,10 @@ class PostgresCRMRepository:
                  data.get("channel"), data.get("purpose"), data.get("scope", "TENANT"),
                  data.get("reason", "OPT_OUT"), data.get("source", "API"), data.get("expires_at")),
             )
-            return self._row(cursor)
+            record = self._row(cursor)
+            self._audit(cursor, tenant_id, "SERVICE", "crm-api", "SUPPRESSION_CREATED",
+                        "SUPPRESSION", suppression_id, str(data.get("correlation_id") or suppression_id))
+            return record
 
     def contactability_evidence(self, tenant_id: str, contact_id: str, phone_token: str, channel: str, purpose: str,
                                 campaign_version_id: str) -> dict:
@@ -198,7 +221,10 @@ class PostgresCRMRepository:
                  data.get("provider_ref"),data["direction"],data["status"],data.get("content_uri"),data.get("content_hash"),
                  data.get("started_at"),data.get("ended_at"),data["correlation_id"]),
             )
-            return self._row(cursor)
+            record = self._row(cursor)
+            self._audit(cursor, tenant_id, "SERVICE", "crm-api", "INTERACTION_RECORDED",
+                        "INTERACTION", interaction_id, str(data["correlation_id"]))
+            return record
 
     def upsert_opportunity(self, tenant_id: str, contact_id: str, data: dict) -> dict:
         opportunity_id = data.get("id", str(uuid4()))
@@ -212,7 +238,10 @@ class PostgresCRMRepository:
                 (opportunity_id,tenant_id,contact_id,data["stage"],data.get("amount"),data.get("currency"),
                  json.dumps(data.get("sensitivity", {})),data.get("owner_user_id")),
             )
-            return self._row(cursor)
+            record = self._row(cursor)
+            self._audit(cursor, tenant_id, "SERVICE", "crm-api", "OPPORTUNITY_UPSERTED",
+                        "OPPORTUNITY", opportunity_id, str(data.get("correlation_id") or opportunity_id))
+            return record
 
     def add_memory_fact(self, tenant_id: str, contact_id: str, fact: dict) -> dict:
         fact_id = str(uuid4())
@@ -225,7 +254,11 @@ class PostgresCRMRepository:
                 (fact_id,tenant_id,contact_id,fact["predicate"],json.dumps(fact["value"]),fact["fact_kind"],
                  fact.get("source_interaction_id"),fact["confidence"],fact["classification"],fact["valid_from"],fact.get("valid_until")),
             )
-            return self._row(cursor)
+            record = self._row(cursor)
+            correlation_id = str(fact.get("correlation_id") or fact.get("source_interaction_id") or fact_id)
+            self._audit(cursor, tenant_id, "SERVICE", "crm-api", "MEMORY_FACT_ADDED",
+                        "MEMORY_FACT", fact_id, correlation_id)
+            return record
 
     def request_arco(self, tenant_id: str, contact_id: str, request_type: str, verification_ref: str) -> dict:
         request_id = str(uuid4())
@@ -237,7 +270,10 @@ class PostgresCRMRepository:
                    RETURNING id,tenant_id,contact_id,request_type,status,due_at""",
                 (request_id,tenant_id,contact_id,request_type,verification_ref),
             )
-            return self._row(cursor)
+            record = self._row(cursor)
+            self._audit(cursor, tenant_id, "SERVICE", "crm-api", "PRIVACY_REQUEST_CREATED",
+                        "DATA_SUBJECT_REQUEST", request_id, request_id)
+            return record
 
     @staticmethod
     def _row(cursor):

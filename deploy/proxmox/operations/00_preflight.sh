@@ -42,4 +42,4 @@ if ss -lntH | awk '{print $4}' | grep -Eq '(^|:)(808[1-7])$' && ss -lntH | awk '
 fi
 
 [[ "$fail" -eq 0 ]] || die "preflight blocked"
-log "PASS RC4 preflight host=$expected_host memory_kib=$memory_kib disk_available_kib=$available_disk_kib"
+log "PASS RC5 preflight host=$expected_host memory_kib=$memory_kib disk_available_kib=$available_disk_kib"

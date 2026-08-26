@@ -23,7 +23,7 @@ for service in "${services[@]}"; do
 done
 chmod 600 "$rollback_file"
 
-log "Deploying RC4 with contact disabled by shadow mode"
+log "Deploying RC5 with contact disabled by shadow mode"
 compose up -d --no-build --remove-orphans
 
 deadline=$((SECONDS + 240))
@@ -45,4 +45,4 @@ for service in "${services[@]}"; do
   [[ "$status" == "healthy" ]] || die "service not healthy: $service status=$status; run 60_rollback.sh"
 done
 compose ps > "$ATLANTIS_EVIDENCE_ROOT/compose-ps-after.txt"
-log "PASS RC4 shadow deployment healthy"
+log "PASS RC5 shadow deployment healthy"

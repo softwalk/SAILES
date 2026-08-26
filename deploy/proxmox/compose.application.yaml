@@ -43,7 +43,7 @@ x-database-env: &database-env
 services:
   policy_gateway:
     <<: *service-defaults
-    image: atlantis-policy-gateway:${ATLANTIS_RELEASE_TAG:-0.9.0-rc4}
+    image: atlantis-policy-gateway:${ATLANTIS_RELEASE_TAG:-0.9.0-rc5}
     build: {<<: *python-build, dockerfile: services/policy_gateway/Dockerfile}
     environment:
       <<: [*security-env, *database-env]
@@ -67,14 +67,20 @@ services:
 
   crm_api:
     <<: *service-defaults
-    image: atlantis-crm-api:${ATLANTIS_RELEASE_TAG:-0.9.0-rc4}
+    image: atlantis-crm-api:${ATLANTIS_RELEASE_TAG:-0.9.0-rc5}
     build: {<<: *python-build, dockerfile: services/crm_api/Dockerfile}
     environment:
       <<: [*security-env, *database-env]
       PORT: "8082"
       ATLANTIS_SHADOW_MODE: ${ATLANTIS_SHADOW_MODE:-true}
       ATLANTIS_CRM_STORAGE: ${ATLANTIS_CRM_STORAGE:-postgres}
+      ATLANTIS_REQUIRE_HUMAN_OIDC: ${ATLANTIS_REQUIRE_HUMAN_OIDC:-false}
+      ATLANTIS_OIDC_ISSUER: ${ATLANTIS_OIDC_ISSUER:-}
+      ATLANTIS_OIDC_AUDIENCE: ${ATLANTIS_OIDC_AUDIENCE:-}
+      ATLANTIS_OIDC_PUBLIC_KEYS_FILE: /etc/atlantis/oidc/public_keys.json
+      ATLANTIS_OIDC_CAMPAIGN_APPROVER_ROLE: ${ATLANTIS_OIDC_CAMPAIGN_APPROVER_ROLE:-CAMPAIGN_APPROVER}
     secrets: [postgres_runtime_password, postgres_ca, workload_secrets]
+    volumes: [/opt/atlantis/infrastructure/oidc:/etc/atlantis/oidc:ro]
     ports: ["127.0.0.1:8082:8082"]
     networks: [control, data]
     mem_limit: 256m
@@ -82,14 +88,20 @@ services:
 
   orchestrator:
     <<: *service-defaults
-    image: atlantis-orchestrator:${ATLANTIS_RELEASE_TAG:-0.9.0-rc4}
+    image: atlantis-orchestrator:${ATLANTIS_RELEASE_TAG:-0.9.0-rc5}
     build: {<<: *python-build, dockerfile: services/orchestrator/Dockerfile}
     environment:
       <<: [*security-env, *database-env]
       PORT: "8083"
       ATLANTIS_SHADOW_MODE: ${ATLANTIS_SHADOW_MODE:-true}
       ATLANTIS_AMQP_URL_FILE: /run/secrets/amqp_url
+      ATLANTIS_REQUIRE_HUMAN_OIDC: ${ATLANTIS_REQUIRE_HUMAN_OIDC:-false}
+      ATLANTIS_OIDC_ISSUER: ${ATLANTIS_OIDC_ISSUER:-}
+      ATLANTIS_OIDC_AUDIENCE: ${ATLANTIS_OIDC_AUDIENCE:-}
+      ATLANTIS_OIDC_PUBLIC_KEYS_FILE: /etc/atlantis/oidc/public_keys.json
+      ATLANTIS_OIDC_HUMAN_REVIEWER_ROLE: ${ATLANTIS_OIDC_HUMAN_REVIEWER_ROLE:-HUMAN_REVIEWER}
     secrets: [postgres_runtime_password, postgres_ca, workload_secrets, amqp_url]
+    volumes: [/opt/atlantis/infrastructure/oidc:/etc/atlantis/oidc:ro]
     ports: ["127.0.0.1:8083:8083"]
     networks: [control, data]
     mem_limit: 256m
@@ -97,13 +109,14 @@ services:
 
   model_gateway:
     <<: *service-defaults
-    image: atlantis-model-gateway:${ATLANTIS_RELEASE_TAG:-0.9.0-rc4}
+    image: atlantis-model-gateway:${ATLANTIS_RELEASE_TAG:-0.9.0-rc5}
     build: {<<: *python-build, dockerfile: services/model_gateway/Dockerfile}
     environment:
       <<: [*security-env, *database-env]
       PORT: "8084"
       ATLANTIS_MODEL_PROVIDER_ORDER: ${ATLANTIS_MODEL_PROVIDER_ORDER:-openrouter,kimi,deepseek}
       ATLANTIS_MODEL_MAX_COST_UNITS_PER_REQUEST: ${ATLANTIS_MODEL_MAX_COST_UNITS_PER_REQUEST:-4000}
+      ATLANTIS_MODEL_DAILY_BUDGET_UNITS: ${ATLANTIS_MODEL_DAILY_BUDGET_UNITS:-100000}
       OPENROUTER_BASE_URL: ${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
       OPENROUTER_MODEL_ID: ${OPENROUTER_MODEL_ID:-UNSET}
       OPENROUTER_API_KEY_FILE: /run/secrets/openrouter_api_key
@@ -124,7 +137,7 @@ services:
 
   voice_adapter:
     <<: *service-defaults
-    image: atlantis-voice-adapter:${ATLANTIS_RELEASE_TAG:-0.9.0-rc4}
+    image: atlantis-voice-adapter:${ATLANTIS_RELEASE_TAG:-0.9.0-rc5}
     build: {<<: *python-build, dockerfile: services/channel_adapters/Dockerfile}
     environment:
       <<: [*security-env, *database-env]
@@ -144,7 +157,7 @@ services:
 
   whatsapp_adapter:
     <<: *service-defaults
-    image: atlantis-whatsapp-adapter:${ATLANTIS_RELEASE_TAG:-0.9.0-rc4}
+    image: atlantis-whatsapp-adapter:${ATLANTIS_RELEASE_TAG:-0.9.0-rc5}
     build: {<<: *python-build, dockerfile: services/channel_adapters/Dockerfile}
     environment:
       <<: [*security-env, *database-env]
@@ -163,7 +176,7 @@ services:
 
   marketia_adapter:
     <<: *service-defaults
-    image: atlantis-marketia-adapter:${ATLANTIS_RELEASE_TAG:-0.9.0-rc4}
+    image: atlantis-marketia-adapter:${ATLANTIS_RELEASE_TAG:-0.9.0-rc5}
     build: {<<: *python-build, dockerfile: services/channel_adapters/Dockerfile}
     environment:
       <<: [*security-env, *database-env]

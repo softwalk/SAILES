@@ -19,20 +19,22 @@ class OperationsKitTests(unittest.TestCase):
     def test_mutating_scripts_require_explicit_execute(self):
         for name in (
             "01_prepare_secret_permissions.sh", "10_backup.sh", "20_apply_migration_004.sh",
-            "21_apply_migration_005.sh", "30_build_images.sh", "40_deploy_shadow.sh", "60_rollback.sh",
+            "21_apply_migration_005.sh", "22_apply_migration_006.sh",
+            "23_apply_migration_007.sh", "24_apply_migration_008.sh", "30_build_images.sh",
+            "40_deploy_shadow.sh", "60_rollback.sh", "80_validate_pilot_controls.sh", "90_shadow_soak.sh",
         ):
             result = subprocess.run([str(OPS / name)], capture_output=True, text=True)
             self.assertNotEqual(result.returncode, 0, name)
             self.assertIn("--execute", result.stderr + result.stdout)
 
-    def test_compose_has_rc4_images_and_no_shared_secret_group(self):
+    def test_compose_has_rc5_images_and_no_shared_secret_group(self):
         compose = (ROOT / "deploy/proxmox/compose.application.yaml").read_text()
         self.assertNotIn("group_add:", compose)
         for service in (
             "policy-gateway", "crm-api", "orchestrator", "model-gateway",
             "voice-adapter", "whatsapp-adapter", "marketia-adapter",
         ):
-            self.assertIn(f"image: atlantis-{service}:${{ATLANTIS_RELEASE_TAG:-0.9.0-rc4}}", compose)
+            self.assertIn(f"image: atlantis-{service}:${{ATLANTIS_RELEASE_TAG:-0.9.0-rc5}}", compose)
 
     def test_openrouter_key_is_a_mounted_secret_not_an_environment_value(self):
         compose = (ROOT / "deploy/proxmox/compose.application.yaml").read_text()

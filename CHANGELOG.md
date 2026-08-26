@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.0-rc5 - 2026-08-26
+
+- Estado del orquestador y deduplicación de eventos persistentes en PostgreSQL, recuperables tras reinicio.
+- Consumo JIT PostgreSQL también en shadow, conservando el bloqueo de replay tras reiniciar adaptadores.
+- OIDC RS256 independiente para aprobaciones de campaña y acciones humanas sensibles.
+- Presupuesto diario acumulado con reserva atómica antes de proveedores y registro durable de llamadas de modelo.
+- Auditoría tenant-safe append-only para CRM, policy, JIT, workflow y modelos; runtime sin escritura directa.
+- Migración 008 con RLS forzado y kit condicional para respetar fingerprints legacy/canónicos de 005–007.
+- Pruebas operativas de RLS cruzado, reinicio, replay, cadena de auditoría y soak shadow de cuatro horas.
+- Suite ampliada a 98 pruebas; distribución sigue fail-closed hasta completar los artefactos legales y de supply chain.
+
 ## Unreleased — OpenRouter
 
 - Integrado OpenRouter en `model_gateway` con endpoint HTTPS oficial allowlisted,

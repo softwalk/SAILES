@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class MigrationContractTests(unittest.TestCase):
     def test_migrations_are_ordered_and_transactional(self):
         files = sorted((ROOT / "database").glob("*.sql"))
-        self.assertEqual([p.name[:3] for p in files], ["001","002","003","004","005","006","007"])
+        self.assertEqual([p.name[:3] for p in files], ["001","002","003","004","005","006","007","008"])
         for path in files[1:]:
             text = path.read_text().strip()
             self.assertTrue(text.startswith("--"))
@@ -61,6 +61,7 @@ class MigrationContractTests(unittest.TestCase):
         self.assertIn("853d86220033dff82930c9e8e91589b6602eba6b00a43c795741a716143cf23e", text)
         self.assertIn("5ba50e9c2e465eea7e65a8c47f0ae89d2791e498ddd02c95c6dda04fa9e91d8d", text)
         self.assertIn("006 no aplica", text)
+        self.assertIn("migration 004 es canónica y 005 no aplica", text)
 
     def test_006_runner_uses_repo_dir_and_real_backup(self):
         """El runner 22_apply_migration_006.sh usa $REPO_DIR y backup PostgreSQL real."""
@@ -77,6 +78,24 @@ class MigrationContractTests(unittest.TestCase):
         self.assertIn("de47dcf79021fad19ba61aa308a372cb3a0d3da837c2b73191f4e7abd3934765", text)
         self.assertIn("migration_005_object_fingerprint_canonical", text)
         self.assertNotIn("UPDATE schema_migration SET checksum", text)
+
+    def test_007_runner_is_conditional_and_008_follows_it(self):
+        runner_007 = (ROOT / "deploy/proxmox/operations/23_apply_migration_007.sh").read_text()
+        rollout = (ROOT / "deploy/proxmox/operations/run_rc5_rollout.sh").read_text()
+        self.assertIn("legacy reconciliation does not apply", runner_007)
+        self.assertIn("reconciliations 005-007 do not apply", runner_007)
+        self.assertIn("migration 007 checksum mismatch", runner_007)
+        self.assertLess(rollout.index("23_apply_migration_007.sh"), rollout.index("24_apply_migration_008.sh"))
+
+    def test_008_adds_durable_pilot_controls_and_tenant_safe_audit(self):
+        text = (ROOT / "database/008_pilot_readiness.sql").read_text()
+        for table in ("workflow_event", "model_budget_daily", "model_budget_reservation"):
+            self.assertIn(table, text)
+        self.assertIn("FORCE ROW LEVEL SECURITY", text)
+        self.assertIn("audit tenant context mismatch", text)
+        self.assertIn("GRANT EXECUTE ON FUNCTION app.append_audit_event", text)
+        self.assertIn("ADD COLUMN cost_units", text)
+        self.assertIn("atlantis.migration_008_checksum", text)
 
 
 if __name__ == "__main__": unittest.main()

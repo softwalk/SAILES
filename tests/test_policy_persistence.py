@@ -69,8 +69,9 @@ class PolicyPersistenceTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertEqual(first, self.cursor.calls[1][1][0])
         self.assertEqual(first, self.cursor.calls[2][1][-1])
-        self.assertEqual(first, self.cursor.calls[4][1][0])
-        self.assertEqual(first, self.cursor.calls[5][1][-1])
+        self.assertEqual(first, self.cursor.calls[5][1][0])
+        self.assertEqual(first, self.cursor.calls[6][1][-1])
+        self.assertIn("append_audit_event", self.cursor.calls[3][0])
 
     def test_denied_decision_is_not_marked_allowed(self):
         self.repository.persist(self.decision(DecisionOutcome.DENY), self.request)

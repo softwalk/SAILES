@@ -27,6 +27,11 @@ class PostgresReplayLedger:
                        VALUES (%s, %s, %s, %s, %s, %s, to_timestamp(%s), to_timestamp(%s))""",
                     (jti, claims.tenant_id, claims.decision_id, claims.channel, nonce_hash, token_hash, claims.iat, claims.exp),
                 )
+                cursor.execute(
+                    """SELECT app.append_audit_event(%s,'SERVICE','policy-gateway','JIT_ISSUED',
+                              'OUTBOUND_AUTHORIZATION',%s,%s,%s::jsonb,%s)""",
+                    (claims.tenant_id, jti, claims.decision_id, '["SHORT_LIVED","SINGLE_USE"]', claims.decision_id),
+                )
 
     def consume(self, jti: str, claims) -> bool:
         nonce_hash = hashlib.sha256(jti.encode()).hexdigest()

@@ -5,6 +5,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from typing import Protocol
+from uuid import UUID
 
 
 class ProviderError(RuntimeError): pass
@@ -34,6 +35,18 @@ class ModelRequest:
     data_classification: str = "INTERNAL"
     max_cost_units: int = 100
     expected_schema: tuple[str, ...] = ()
+    run_id: str | None = None
+    correlation_id: str | None = None
+    prompt_version: str = "inline@1"
+
+    def __post_init__(self):
+        for name in ("run_id", "correlation_id"):
+            value = getattr(self, name)
+            if value is not None:
+                try:
+                    UUID(str(value))
+                except (ValueError, TypeError, AttributeError) as exc:
+                    raise ValueError(f"MODEL_{name.upper()}_INVALID") from exc
 
 
 @dataclass(frozen=True)

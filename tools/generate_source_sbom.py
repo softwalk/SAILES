@@ -7,7 +7,7 @@ from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "release/candidate"
-VERSION = "0.9.0-rc4"
+VERSION = "0.9.0-rc5"
 
 
 def directory_hash(path: Path) -> str:

@@ -1,21 +1,21 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
-  "serialNumber": "urn:uuid:eebae03d-3c32-40b1-b9a0-10cff6223afd",
+  "serialNumber": "urn:uuid:fcce36d6-6e53-45c3-8f05-6c7611424bbd",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-08-26T03:26:50.907919+00:00",
+    "timestamp": "2026-08-26T11:33:36.897862+00:00",
     "component": {
       "type": "application",
       "name": "atlantis-autonomous-sales",
-      "version": "0.9.0-rc4"
+      "version": "0.9.0-rc5"
     }
   },
   "components": [
     {
       "type": "application",
       "name": "agent_adapters",
-      "version": "0.9.0-rc4",
+      "version": "0.9.0-rc5",
       "hashes": [
         {
           "alg": "SHA-256",
@@ -33,11 +33,11 @@
     {
       "type": "application",
       "name": "channel_adapters",
-      "version": "0.9.0-rc4",
+      "version": "0.9.0-rc5",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "d1bcedab1f3b26ef91531b5ccbf5cfbe8178a2a7621176fe5ff702464b237fa8"
+          "content": "0febd717cf2e19bb4cbb2a85bd1d72d9d1e8e9505ff7e4eaeb094c2dc5731b86"
         }
       ],
       "licenses": [
@@ -51,11 +51,11 @@
     {
       "type": "application",
       "name": "crm_api",
-      "version": "0.9.0-rc4",
+      "version": "0.9.0-rc5",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "4b891d6c3cf0aeef9b31d7b0f309283a1082d37aa11a27859e3782ebd00490f6"
+          "content": "a24b0cffa7fb253737594dcbf2a7e6f8437ecde1bf4e860ec453e76ec21a7f8f"
         }
       ],
       "licenses": [
@@ -69,11 +69,11 @@
     {
       "type": "application",
       "name": "model_gateway",
-      "version": "0.9.0-rc4",
+      "version": "0.9.0-rc5",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "cee7604942955c169eadf7937c44bdcbaa2f178d6fb62f932154e71fbc4ef54d"
+          "content": "e6f351cc22f10b8cd38b1151e72c7153aaed7ce1e9a5f010d72256b25bb36ec5"
         }
       ],
       "licenses": [
@@ -87,11 +87,11 @@
     {
       "type": "application",
       "name": "orchestrator",
-      "version": "0.9.0-rc4",
+      "version": "0.9.0-rc5",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "079e3cfde44d76c039af5da40d7355581559617bc7e0aba0b93d30cd94591218"
+          "content": "8c6648df85df9d3cdbe63d661e6cbe16a373dac570224de483b30ceb8c8dbc75"
         }
       ],
       "licenses": [
@@ -105,11 +105,11 @@
     {
       "type": "application",
       "name": "policy_gateway",
-      "version": "0.9.0-rc4",
+      "version": "0.9.0-rc5",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "18969225f2157b59a628e68de6deeaa02d7bf1d35b9b43143d83e2c87e1b24b9"
+          "content": "dc1e0e34c1a46173d8485a22f236520006c977157de0918c8874e6992ebd6b5b"
         }
       ],
       "licenses": [
@@ -123,11 +123,11 @@
     {
       "type": "library",
       "name": "atlantis-contracts",
-      "version": "0.9.0-rc4",
+      "version": "0.9.0-rc5",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "cf67826f708c5025489c67f5d3f10d7fb505fb1f696a2241e065b59b76596983"
+          "content": "0b4d305af24d8c5f322fb330528cb5b3c520e6ab96fa71cede5ef0815bd5be5c"
         }
       ],
       "licenses": [
