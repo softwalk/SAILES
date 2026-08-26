@@ -53,9 +53,13 @@ def complete(body):
     try:
         request = ModelRequest(**body)
         restricted = {item.strip().lower() for item in os.getenv("RESTRICTED_PROVIDER_ALLOWLIST", "").split(",") if item.strip()}
-        response = ModelGateway(configured_providers(), restricted).complete(request)
+        policy_max_cost_units = int(os.getenv("ATLANTIS_MODEL_MAX_COST_UNITS_PER_REQUEST", "4000"))
+        response = ModelGateway(
+            configured_providers(), restricted,
+            policy_max_cost_units=policy_max_cost_units,
+        ).complete(request)
         return 200, response
-    except ProviderError as exc:
+    except (ProviderError, ValueError) as exc:
         return 503, {"error": str(exc)}
 
 

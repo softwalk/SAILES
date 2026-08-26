@@ -24,12 +24,15 @@ En `/opt/atlantis/infrastructure/.env`:
 
 ```dotenv
 ATLANTIS_MODEL_PROVIDER_ORDER=openrouter,kimi,deepseek
+ATLANTIS_MODEL_MAX_COST_UNITS_PER_REQUEST=4000
 OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 OPENROUTER_MODEL_ID=PROVEEDOR/MODELO-EXACTO-APROBADO
 OPENROUTER_API_KEY_FILE=/run/secrets/openrouter_api_key
 OPENROUTER_HTTP_REFERER=https://DOMINIO-CORPORATIVO
 OPENROUTER_APP_TITLE=Atlantis Autonomous Sales
 RESTRICTED_PROVIDER_ALLOWLIST=
+KIMI_BASE_URL=http://atlantis-platform-model_gateway-1:4000/v1
+DEEPSEEK_BASE_URL=http://atlantis-platform-model_gateway-1:4000/v1
 ```
 
 `UNSET` deshabilita OpenRouter. No usar `openrouter/auto` en producción porque
@@ -50,6 +53,19 @@ curl --fail --silent http://127.0.0.1:8084/health
 La salud debe incluir `openrouter` en `configured_providers`. Probar sólo con
 datos sintéticos en `SHADOW`; una respuesta satisfactoria no autoriza campañas
 ni datos personales reales.
+
+Validar también DNS/TCP desde el contenedor. El endpoint `/health` informa
+configuración, no garantiza por sí solo conectividad con los proveedores:
+
+```bash
+sudo deploy/proxmox/operations/02_validate_model_provider_connectivity.sh
+```
+
+El techo `ATLANTIS_MODEL_MAX_COST_UNITS_PER_REQUEST` lo fija el servidor. El
+gateway rechaza antes de llamar al proveedor cuando el prompt no cabe en el
+presupuesto y transmite al proveedor únicamente el remanente como
+`max_completion_tokens`. Los proveedores detrás de LiteLLM reciben
+`max_tokens` por compatibilidad con sus adaptadores actuales.
 
 ## 4. Revocación y rollback
 

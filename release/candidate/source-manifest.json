@@ -1,7 +1,7 @@
 {
   "version": "0.9.0-rc4",
-  "source_tree_sha256": "2f427812344ae10789d3e63ce49f5bdc1d96b11c1761c5886f923d4727f5ce8f",
-  "generated_at": "2026-08-23T19:12:36.174031+00:00",
+  "source_tree_sha256": "c0b54d1b1e4b0c2646d82cffb5428d5b8e63be931e3c3622a874f7d406ac3312",
+  "generated_at": "2026-08-26T02:43:35.295188+00:00",
   "distribution_authorized": false,
   "reason": "Third-party component/model locks and legal evidence are incomplete"
 }

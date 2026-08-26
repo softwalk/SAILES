@@ -10,6 +10,10 @@
   mutable `openrouter/auto`.
 - Añadidos runbook, OpenSpec, configuración Proxmox y pruebas de secreto,
   encabezados, endpoint, routing y clasificación.
+- Endurecido el presupuesto por solicitud con techo del servidor, rechazo
+  previo, `max_tokens` y exigencia de telemetría de uso del proveedor.
+- El gate de piloto ahora valida DNS/TCP de OpenRouter, Kimi y DeepSeek desde
+  `model_gateway`; corregido el hostname de LiteLLM para la topología VM 110.
 
 ## 0.9.0-rc4 - 2026-08-22
 

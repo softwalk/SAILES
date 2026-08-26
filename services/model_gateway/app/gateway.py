@@ -48,10 +48,12 @@ class ModelResponse:
 class Provider(Protocol):
     name: str
     model_id: str
-    def complete(self, prompt: str) -> tuple[dict, int]: ...
+    def complete(self, prompt: str, max_output_units: int) -> tuple[dict, int]: ...
 
 
 class OpenAICompatibleProvider:
+    completion_limit_parameter = "max_tokens"
+
     def __init__(self, name: str, base_url: str, model_id: str, api_key: str,
                  extra_headers: dict[str, str] | None = None):
         if not model_id or model_id == "UNSET" or not api_key:
@@ -70,8 +72,16 @@ class OpenAICompatibleProvider:
         self.name, self.base_url, self.model_id, self.api_key = name, base_url.rstrip("/"), model_id, api_key
         self.extra_headers = headers
 
-    def complete(self, prompt: str) -> tuple[dict, int]:
-        payload = json.dumps({"model": self.model_id, "messages": [{"role": "user", "content": prompt}], "response_format": {"type": "json_object"}}).encode()
+    def complete(self, prompt: str, max_output_units: int) -> tuple[dict, int]:
+        if not isinstance(max_output_units, int) or isinstance(max_output_units, bool) or max_output_units < 1:
+            raise ProviderError("BUDGET_EXCEEDED_PRECALL")
+        request_body = {
+            "model": self.model_id,
+            "messages": [{"role": "user", "content": prompt}],
+            "response_format": {"type": "json_object"},
+            self.completion_limit_parameter: max_output_units,
+        }
+        payload = json.dumps(request_body).encode()
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json", **self.extra_headers}
         request = urllib.request.Request(self.base_url + "/chat/completions", payload, headers)
         try:
@@ -79,7 +89,10 @@ class OpenAICompatibleProvider:
                 raw = json.load(response)
             content = raw["choices"][0]["message"]["content"]
             usage = raw.get("usage", {})
-            return json.loads(content), int(usage.get("total_tokens", 0))
+            total_tokens = int(usage.get("total_tokens", 0))
+            if total_tokens < 1:
+                raise ProviderError(f"{self.name.upper()}_USAGE_MISSING")
+            return json.loads(content), total_tokens
         except (urllib.error.URLError, TimeoutError, KeyError, ValueError, json.JSONDecodeError) as exc:
             raise ProviderError(f"{self.name.upper()}_FAILURE") from exc
 
@@ -88,6 +101,7 @@ class OpenRouterProvider(OpenAICompatibleProvider):
     """OpenRouter adapter with a fixed TLS trust boundary and optional attribution."""
 
     allowed_hostname = "openrouter.ai"
+    completion_limit_parameter = "max_completion_tokens"
 
     def __init__(self, model_id: str, api_key: str,
                  base_url: str = "https://openrouter.ai/api/v1",
@@ -115,19 +129,38 @@ class OpenRouterProvider(OpenAICompatibleProvider):
 
 
 class ModelGateway:
+    # Conservative pre-call reserve for chat framing and provider metadata.
+    # UTF-8 bytes upper-bound prompt tokens; the remaining allowance is sent
+    # to the provider as max_tokens and actual usage is reconciled afterwards.
+    protocol_overhead_units = 64
+    minimum_output_units = 16
     pii_patterns = [
         re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+"),
         re.compile(r"(?<!\d)(?:\+?52)?\s?\d{10}(?!\d)"),
     ]
 
     def __init__(self, providers: list[Provider], restricted_provider_allowlist: set[str] | None = None,
-                 budget_ledger: BudgetLedger | None = None, health: ProviderHealth | None = None):
+                 budget_ledger: BudgetLedger | None = None, health: ProviderHealth | None = None,
+                 policy_max_cost_units: int = 4000):
+        if (not isinstance(policy_max_cost_units, int) or isinstance(policy_max_cost_units, bool)
+                or policy_max_cost_units < 1):
+            raise ProviderError("MODEL_BUDGET_POLICY_INVALID")
         self.providers = providers
         self.restricted_provider_allowlist = restricted_provider_allowlist or set()
         self.budget_ledger, self.health = budget_ledger or BudgetLedger(), health or ProviderHealth()
+        self.policy_max_cost_units = policy_max_cost_units
 
     def complete(self, request: ModelRequest) -> ModelResponse:
         prompt, redacted = self._redact(request.prompt)
+        if (not isinstance(request.max_cost_units, int) or isinstance(request.max_cost_units, bool)
+                or request.max_cost_units < 1):
+            raise ProviderError("BUDGET_INVALID")
+        if request.max_cost_units > self.policy_max_cost_units:
+            raise ProviderError("BUDGET_POLICY_LIMIT_EXCEEDED")
+        prompt_upper_bound = len(prompt.encode("utf-8")) + self.protocol_overhead_units
+        max_output_units = request.max_cost_units - prompt_upper_bound
+        if max_output_units < self.minimum_output_units:
+            raise ProviderError("BUDGET_EXCEEDED_PRECALL")
         errors = []
         for provider in self.providers:
             if not self.health.allow(provider.name):
@@ -137,7 +170,7 @@ class ModelGateway:
             if self.budget_ledger.remaining(request.tenant_id, request.task_alias, request.max_cost_units) <= 0:
                 raise ProviderError("BUDGET_EXCEEDED")
             try:
-                output, cost = provider.complete(prompt)
+                output, cost = provider.complete(prompt, max_output_units)
                 if cost > self.budget_ledger.remaining(request.tenant_id, request.task_alias, request.max_cost_units):
                     raise ProviderError("BUDGET_EXCEEDED")
                 missing = [key for key in request.expected_schema if key not in output]

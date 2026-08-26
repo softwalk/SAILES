@@ -73,6 +73,9 @@ fi
 
 prov=$(curl --fail --silent --max-time 5 http://127.0.0.1:8084/health 2>/dev/null | python3 -c 'import json,sys; print(len(json.load(sys.stdin).get("configured_providers",[])))' 2>/dev/null || echo 0)
 (( prov >= 1 )) && pass "proveedor de modelos configurado ($prov)" || fail "no approved model provider configured"
+"$OPS_DIR/02_validate_model_provider_connectivity.sh" >/dev/null 2>&1 \
+  && pass "proveedores configurados resuelven DNS y aceptan TCP" \
+  || fail "configured model provider is not reachable from model_gateway"
 
 hc=0
 for port in 8081 8082 8083 8084 8085 8086 8087; do

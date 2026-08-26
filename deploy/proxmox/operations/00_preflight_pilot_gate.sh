@@ -120,6 +120,7 @@ else gate_fail "image digest evidence missing"; fi
 
 provider_count="$(curl --fail --silent --max-time 5 http://127.0.0.1:8084/health 2>/dev/null | python3 -c 'import json,sys; print(len(json.load(sys.stdin).get("configured_providers",[])))' 2>/dev/null || printf 0)"
 (( provider_count >= 1 )) || gate_fail "no approved model provider configured"
+"$OPS_DIR/02_validate_model_provider_connectivity.sh" >/dev/null 2>&1 || gate_fail "configured model provider is not reachable from model_gateway"
 for port in 8081 8082 8083 8084 8085 8086 8087; do
   curl --fail --silent --max-time 5 "http://127.0.0.1:$port/health" >/dev/null 2>&1 || gate_fail "service health failed on port $port"
 done
