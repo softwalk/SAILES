@@ -41,12 +41,14 @@ class CRMStore:
             self._event(tenant_id, "campaign.version.created", "campaign_version", version_id, {"canonical": canonical})
         return deepcopy(record)
 
-    def approve_campaign(self, tenant_id: str, version_id: str, approver_id: str, subject_hash: str):
+    def approve_campaign(self, tenant_id: str, version_id: str, approver_id: str, subject_hash: str,
+                         approver_role: str = "CAMPAIGN_APPROVER", comment: str | None = None):
         with self._lock:
             row = self.campaigns[self._key(tenant_id, version_id)]
             if row["manifest_hash"] != subject_hash:
                 raise ValueError("APPROVAL_HASH_MISMATCH")
-            row.update(status="APPROVED", approved_hash=subject_hash, approved_by=approver_id)
+            row.update(status="APPROVED", approved_hash=subject_hash, approved_by=approver_id,
+                       approver_role=approver_role, approval_comment=comment)
             self._event(tenant_id, "campaign.version.approved", "campaign_version", version_id, {"approver_id": approver_id})
             return deepcopy(row)
 

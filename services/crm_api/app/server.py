@@ -9,7 +9,8 @@ from .postgres import PostgresCRMRepository
 router = JsonRouter(service_name="crm-api")
 configure_workload_auth(router)
 configure_rate_limit(router)
-router.require_idempotency("/v1/contacts", "/v1/campaign-versions", "/v1/suppressions", "/v1/interactions",
+router.require_idempotency("/v1/contacts", "/v1/campaign-versions", "/v1/campaign-versions/approve",
+                           "/v1/suppressions", "/v1/interactions",
                            "/v1/opportunities", "/v1/memory-facts", "/v1/privacy/requests", "/v1/contactability-evidence")
 storage_mode = os.getenv(
     "ATLANTIS_CRM_STORAGE",
@@ -36,6 +37,14 @@ def contact(body): return 201, store.create_contact(body.pop("tenant_id"), body)
 
 @router.route("POST", "/v1/campaign-versions")
 def campaign(body): return 201, store.create_campaign_version(body["tenant_id"], body["campaign_id"], body["manifest"])
+
+
+@router.route("POST", "/v1/campaign-versions/approve")
+def approve_campaign(body):
+    return 200, store.approve_campaign(
+        body["tenant_id"], body["campaign_version_id"], body["approver_id"], body["subject_hash"],
+        body.get("approver_role", "CAMPAIGN_APPROVER"), body.get("comment"),
+    )
 
 
 @router.route("POST", "/v1/suppressions")

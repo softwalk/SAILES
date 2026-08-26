@@ -3,6 +3,8 @@ import json
 from contextlib import contextmanager
 from uuid import uuid4
 
+from atlantis_contracts import sha256_hex
+
 
 class PostgresCRMRepository:
     def __init__(self, connection_factory):
@@ -36,6 +38,72 @@ class PostgresCRMRepository:
                    RETURNING id, tenant_id, display_name, company_name, phone_token, lifecycle_stage, version""",
                 (contact_id, tenant_id, data.get("display_name"), data.get("company_name"),
                  data.get("phone_token"), data.get("lifecycle_stage", "DISCOVERED")),
+            )
+            return self._row(cursor)
+
+    def create_campaign_version(self, tenant_id: str, campaign_id: str, manifest: dict) -> dict:
+        version_id = str(uuid4())
+        owner_user_id = manifest.get("owner_user_id") or str(uuid4())
+        created_by = manifest.get("created_by") or owner_user_id
+        manifest_hash = sha256_hex(manifest)
+        with self._cursor(tenant_id) as cursor:
+            cursor.execute(
+                """INSERT INTO campaign (id,tenant_id,name,owner_user_id)
+                   VALUES (%s,%s,%s,%s)
+                   ON CONFLICT (id) DO NOTHING""",
+                (campaign_id, tenant_id, manifest.get("name", "Atlantis campaign"), owner_user_id),
+            )
+            cursor.execute(
+                "SELECT id FROM campaign WHERE id=%s AND tenant_id=%s FOR UPDATE",
+                (campaign_id, tenant_id),
+            )
+            if cursor.fetchone() is None:
+                raise PermissionError("CAMPAIGN_TENANT_MISMATCH")
+            cursor.execute(
+                "SELECT COALESCE(MAX(version_no),0)+1 FROM campaign_version WHERE campaign_id=%s AND tenant_id=%s",
+                (campaign_id, tenant_id),
+            )
+            version_no = int(cursor.fetchone()[0])
+            cursor.execute(
+                """INSERT INTO campaign_version
+                   (id,tenant_id,campaign_id,version_no,status,purpose,definition,artifact_hash,created_by)
+                   VALUES (%s,%s,%s,%s,'PENDING_APPROVAL',%s,%s::jsonb,%s,%s)
+                   RETURNING id,tenant_id,campaign_id,version_no,status,purpose,artifact_hash AS manifest_hash,created_by""",
+                (version_id, tenant_id, campaign_id, version_no, manifest.get("purpose", "PROMOTIONAL"),
+                 json.dumps(manifest), manifest_hash, created_by),
+            )
+            record = self._row(cursor)
+            cursor.execute(
+                """INSERT INTO campaign_artifact
+                   (id,tenant_id,campaign_version_id,artifact_kind,canonical_manifest,artifact_hash)
+                   VALUES (%s,%s,%s,'CAMPAIGN_MANIFEST',%s::jsonb,%s)""",
+                (str(uuid4()), tenant_id, version_id, json.dumps(manifest), manifest_hash),
+            )
+            return record
+
+    def approve_campaign(self, tenant_id: str, version_id: str, approver_id: str, subject_hash: str,
+                         approver_role: str = "CAMPAIGN_APPROVER", comment: str | None = None) -> dict:
+        with self._cursor(tenant_id) as cursor:
+            cursor.execute(
+                "SELECT artifact_hash FROM campaign_version WHERE id=%s AND tenant_id=%s FOR UPDATE",
+                (version_id, tenant_id),
+            )
+            row = cursor.fetchone()
+            if row is None:
+                raise ValueError("CAMPAIGN_VERSION_NOT_FOUND")
+            if row[0] != subject_hash:
+                raise ValueError("APPROVAL_HASH_MISMATCH")
+            cursor.execute(
+                """INSERT INTO approval
+                   (id,tenant_id,subject_type,subject_id,subject_hash,decision,approver_user_id,approver_role,comment)
+                   VALUES (%s,%s,'CAMPAIGN_VERSION',%s,%s,'APPROVE',%s,%s,%s)""",
+                (str(uuid4()), tenant_id, version_id, subject_hash, approver_id, approver_role, comment),
+            )
+            cursor.execute(
+                """UPDATE campaign_version SET status='APPROVED'
+                   WHERE id=%s AND tenant_id=%s AND artifact_hash=%s
+                   RETURNING id,tenant_id,campaign_id,version_no,status,purpose,artifact_hash AS manifest_hash,created_by""",
+                (version_id, tenant_id, subject_hash),
             )
             return self._row(cursor)
 

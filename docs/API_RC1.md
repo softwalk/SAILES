@@ -6,6 +6,7 @@ Todas las operaciones mutables requieren `Idempotency-Key` de 16–128 caractere
 |---|---|---|
 | CRM | `POST /v1/contacts` | Tenant autenticado |
 | CRM | `POST /v1/campaign-versions` | Creador de campaña |
+| CRM | `POST /v1/campaign-versions/approve` | Aprobador humano; hash exacto obligatorio |
 | CRM | `POST /v1/suppressions` | Propaga opt-out |
 | CRM | `POST /v1/interactions` | Idempotencia proveedor/ref |
 | CRM | `POST /v1/opportunities` | Sensibilidad |
@@ -24,3 +25,7 @@ Todas las operaciones mutables requieren `Idempotency-Key` de 16–128 caractere
 | Webhooks | `GET/POST /v1/webhooks/...` | Challenge o firma HMAC de proveedor |
 
 El modelo de errores es JSON `{ "error": "REASON_CODE" }`. Denegaciones de autenticación/política usan 403, replay/conflictos 409, payload excesivo 413 y proveedor no disponible 503.
+
+La operación de aprobación debe publicarse detrás del gateway OIDC con el scope
+`campaign:approve`. La firma HMAC entre servicios autentica al workload, pero no
+sustituye la identidad ni el rol del aprobador humano.
