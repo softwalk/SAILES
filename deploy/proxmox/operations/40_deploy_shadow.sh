@@ -9,7 +9,7 @@ require_file "$backup_dir/atlantis.dump"
 
 grep -Eq '^ATLANTIS_SHADOW_MODE=(true|"true")$' "$ATLANTIS_ENV_FILE" || die "shadow mode is not explicitly true"
 export ATLANTIS_RELEASE_TAG="$ATLANTIS_RELEASE"
-services=(policy_gateway crm_api orchestrator model_gateway voice_adapter whatsapp_adapter marketia_adapter)
+services=(policy_gateway crm_api orchestrator model_gateway voice_adapter marketia_adapter)
 
 rollback_file="$backup_dir/rollback-images.yaml"
 printf 'services:\n' > "$rollback_file"

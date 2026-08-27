@@ -1,0 +1,15 @@
+schema_version: 1
+release: 0.9.0-rc5
+scope: B2B-only
+channels:
+  voice: enabled-shadow-only
+  whatsapp: deferred-disabled
+repep:
+  registration_required_for_this_scope: false
+  campaign_exception_type: B2B
+  campaign_approval_required: true
+  campaign_evidence_required: true
+guardrails:
+  - Any B2C campaign is outside this release scope and must remain blocked.
+  - WhatsApp must not be started, built, published or routed by the default deployment.
+  - Changing this scope requires a new Legal/Privacy review and release approval.

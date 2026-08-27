@@ -115,7 +115,7 @@ El rollback de base de datos no es automático. Para restaurar `atlantis.dump` s
 - Dump PostgreSQL y checksum.
 - Compose resuelto antes del cambio.
 - Inventario de contenedores e imágenes anteriores.
-- Digests locales de la base y siete servicios RC5.
+- Digests locales de la base y seis servicios RC5-B2B. WhatsApp permanece fuera del perfil predeterminado.
 - Healthchecks, 101 pruebas, shadow E2E y DR drill.
 - Evidencia de reinicio, RLS, anti-replay, cadena de auditoría y soak.
 - Estado RLS y políticas PostgreSQL.

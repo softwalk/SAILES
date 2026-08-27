@@ -31,7 +31,6 @@ SERVICE_IMAGES = (
     "atlantis-orchestrator:0.9.0-rc5",
     "atlantis-model-gateway:0.9.0-rc5",
     "atlantis-voice-adapter:0.9.0-rc5",
-    "atlantis-whatsapp-adapter:0.9.0-rc5",
     "atlantis-marketia-adapter:0.9.0-rc5",
 )
 PYTHON_BASE_IMAGE = "atlantis-python-base:0.9.0-rc5"
@@ -700,6 +699,10 @@ def main() -> int:
     image_manifest = scan_image_sboms(args.syft, blockers) if args.scan_images else None
     if image_manifest is None and image_manifest_path.is_file():
         existing_image_manifest = json.loads(image_manifest_path.read_text(encoding="utf-8"))
+        active_images = set(image_scan_targets())
+        existing_image_manifest["images"] = [
+            item for item in existing_image_manifest.get("images", []) if item.get("name") in active_images
+        ]
         refresh_image_manifest_findings(existing_image_manifest)
         image_manifest = existing_image_manifest
         add_image_license_blockers(image_manifest, blockers)

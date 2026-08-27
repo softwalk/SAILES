@@ -50,8 +50,8 @@ blockers:
     contactos externos; conservar JSONL y SHA-256.
 - id: EXT-001
   severity: P0
-  status: open
-  note: 'REPEP/legal: evidencias legales y de registro REPEP (solo el usuario).'
+  status: deferred
+  note: 'REPEP fuera del alcance de RC5-B2B. Cada campaña debe acreditar clasificación y aprobación B2B; cualquier campaña B2C vuelve a abrir este bloqueo antes de contacto.'
 - id: EXT-002
   severity: P0
   status: open
@@ -62,8 +62,8 @@ blockers:
   note: 'Atlantis-Neobot: integración/aprobación del bot.'
 - id: EXT-004
   severity: P0
-  status: open
-  note: 'Meta/WABA: WhatsApp Business API aprobada (app, plantillas, número).'
+  status: deferred
+  note: 'WhatsApp fuera del alcance de RC5-B2B y desactivado en el despliegue predeterminado. Reactivarlo exige Meta/WABA, opt-in, plantillas y nueva revisión.'
 - id: EXT-005
   severity: P1
   status: open

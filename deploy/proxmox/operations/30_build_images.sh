@@ -26,7 +26,6 @@ for service in policy_gateway crm_api orchestrator model_gateway channel_adapter
   docker build --pull=false --build-arg "PYTHON_BASE_IMAGE=$base_tag" -f "$REPO_DIR/${dockerfiles[$service]}" -t "$tag" "$REPO_DIR"
 done
 docker tag "atlantis-channel-adapters:$ATLANTIS_RELEASE" "atlantis-voice-adapter:$ATLANTIS_RELEASE"
-docker tag "atlantis-channel-adapters:$ATLANTIS_RELEASE" "atlantis-whatsapp-adapter:$ATLANTIS_RELEASE"
 docker tag "atlantis-channel-adapters:$ATLANTIS_RELEASE" "atlantis-marketia-adapter:$ATLANTIS_RELEASE"
 
 install -d -m 700 "$ATLANTIS_EVIDENCE_ROOT"
@@ -35,7 +34,7 @@ output="$ATLANTIS_EVIDENCE_ROOT/image-digests.tsv"
 for image in "$base_tag" \
   "atlantis-policy-gateway:$ATLANTIS_RELEASE" "atlantis-crm-api:$ATLANTIS_RELEASE" \
   "atlantis-orchestrator:$ATLANTIS_RELEASE" "atlantis-model-gateway:$ATLANTIS_RELEASE" \
-  "atlantis-voice-adapter:$ATLANTIS_RELEASE" "atlantis-whatsapp-adapter:$ATLANTIS_RELEASE" \
+  "atlantis-voice-adapter:$ATLANTIS_RELEASE" \
   "atlantis-marketia-adapter:$ATLANTIS_RELEASE"; do
   id="$(docker image inspect --format '{{.Id}}' "$image")"
   [[ "$id" =~ ^sha256:[a-f0-9]{64}$ ]] || die "invalid local image digest for $image"

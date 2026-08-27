@@ -4,6 +4,8 @@ Implementación de referencia del OpenSpec v1.2. El repositorio entrega un relea
 
 > Estado: **release candidate / shadow mode**. No es una appliance distribuible ni autoriza contacto real. Consulte `release/BLOCKERS.yaml` antes de cualquier piloto.
 
+> Alcance RC5-B2B: exclusivamente campañas B2B aprobadas y evidenciadas. REPEP queda fuera de este alcance; WhatsApp está diferido y desactivado en el despliegue predeterminado. Véase `release/SCOPE_RC5_B2B.yaml`.
+
 ## Lo que ya funciona
 
 - Policy Gateway determinístico y `fail closed` para voz/WhatsApp.
@@ -75,7 +77,7 @@ Cada directorio de `services/` representa un artefacto desplegable independiente
 | orchestrator | HTTP :8083 | Estado, aprobaciones, outbox y reintentos |
 | model_gateway | HTTP :8084 | OpenRouter/Kimi/DeepSeek, redacción y fallback |
 | voice_adapter | HTTP :8085, shadow | VICIdial/Atlantis-Neobot tras token JIT |
-| whatsapp_adapter | HTTP :8086, shadow | Meta Cloud API y webhooks tras token JIT |
+| whatsapp_adapter | Diferido / perfil opcional | Fuera del alcance RC5-B2B; no se inicia por defecto |
 | marketia_adapter | HTTP :8087 | Sincronización sin autoridad de cumplimiento |
 
 ## Reglas de producción

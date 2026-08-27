@@ -7,7 +7,7 @@
     reverse_proxy policy_gateway:8081
   }
   handle /v1/webhooks/meta/whatsapp* {
-    reverse_proxy whatsapp_adapter:8086
+    respond "WhatsApp is disabled for RC5-B2B" 404
   }
   handle /v1/webhooks/vicidial* {
     reverse_proxy voice_adapter:8085

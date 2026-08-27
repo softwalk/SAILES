@@ -124,6 +124,18 @@ ROLE:atlantis_suppression_admin:falsefalsefalsefalsefalsefalse
         self.assertNotIn("docker image inspect --format {{.Id}}", publisher)
         self.assertIn("printf '%s\\t%s@%s\\n'", publisher)
 
+    def test_rc5_b2b_defers_whatsapp_but_keeps_b2b_evidence_gate(self):
+        compose = (ROOT / "deploy/proxmox/compose.application.yaml").read_text()
+        publisher = (OPS / "35_publish_oci_images.sh").read_text()
+        deployment = (OPS / "40_deploy_shadow.sh").read_text()
+        policy = (ROOT / "services/policy_gateway/app/policy.py").read_text()
+        scope = (ROOT / "release/SCOPE_RC5_B2B.yaml").read_text()
+        self.assertIn("profiles: [deferred-whatsapp]", compose)
+        self.assertNotIn("atlantis-whatsapp-adapter", publisher)
+        self.assertNotIn("whatsapp_adapter marketia_adapter", deployment)
+        self.assertIn("repep_exemption_approved", policy)
+        self.assertIn("campaign_evidence_required: true", scope)
+
 
 if __name__ == "__main__":
     unittest.main()

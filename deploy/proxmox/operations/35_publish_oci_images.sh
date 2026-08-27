@@ -15,7 +15,6 @@ images=(
   atlantis-orchestrator
   atlantis-model-gateway
   atlantis-voice-adapter
-  atlantis-whatsapp-adapter
   atlantis-marketia-adapter
 )
 
