@@ -114,7 +114,7 @@ ROLE:atlantis_suppression_admin:falsefalsefalsefalsefalsefalse
         self.assertIn('"ATLANTIS_REQUIRE_HUMAN_OIDC": "true"', setup)
         self.assertIn("docker image inspect --format '{{.Id}}'", setup)
         self.assertIn('docker pull "$image_ref"', setup)
-        self.assertIn('"$image_id" "${arguments[@]}"', setup)
+        self.assertIn('"$image_id" start-dev --import-realm', setup)
         self.assertIn("80_validate_pilot_controls.sh", setup)
 
 
