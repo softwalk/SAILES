@@ -6,3 +6,5 @@ release/candidate/
 .env
 *.pyc
 secrets/
+dist/
+release/trusted-signers/*.key
