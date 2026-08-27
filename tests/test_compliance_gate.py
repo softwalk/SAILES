@@ -127,6 +127,19 @@ class DistributionComplianceGateTests(unittest.TestCase):
         errors = compliance_gate.distribution_errors(self.root, self.artifact)
         self.assertIn("Attestation digest mismatch: THIRD_PARTY_NOTICES.md", errors)
 
+    def test_same_signer_cannot_approve_multiple_roles(self):
+        self.write_complete_unsigned_evidence()
+        self.write_signed_attestation()
+        path = self.evidence / "attestation.json"
+        attestation = json.loads(path.read_text())
+        for approval in attestation["approvals"]:
+            approval["signer"] = "one-person@example.invalid"
+        path.write_text(json.dumps(attestation))
+        errors = compliance_gate.distribution_errors(self.root, self.artifact)
+        self.assertIn(
+            "Signer cannot approve multiple independent roles: one-person@example.invalid", errors,
+        )
+
     def test_pending_component_is_blocked(self):
         self.write_complete_unsigned_evidence()
         lock_path = self.evidence / "component-lock.json"

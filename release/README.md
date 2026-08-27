@@ -33,4 +33,6 @@ El gate comprueba contenido no vacío, componentes fijados, cobertura del SBOM y
 
 La firma cubre la representación JSON canónica y sin espacios de los campos `subject` y `artifacts` de `attestation.json`, con las claves ordenadas. Cada aprobación declara `role`, `signer`, `signed_at` y `signature_base64`; el gate verifica la firma con OpenSSL y no acepta indicadores booleanos de aprobación.
 
+Release, Security y Legal deben usar tres identidades de firmante distintas. Una misma persona o identidad criptográfica no puede aprobar más de uno de esos roles en la misma attestation.
+
 `tools/prepare_unsigned_distribution_evidence.py --artifact /ruta/al/artefacto-final` prepara un paquete sin firmas únicamente cuando el candidato declara cero bloqueos y la revisión legal ya está registrada. Genera `SIGNING_PAYLOAD.json` para que Release, Security y Legal lo firmen por canales independientes. La herramienta no genera claves, no atribuye identidades y no convierte licencias desconocidas en declaraciones genéricas.

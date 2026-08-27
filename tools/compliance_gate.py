@@ -482,10 +482,13 @@ def validate_attestation(root: Path, evidence: Path, artifact: Path | None, erro
         return
     roles = {str(item.get("role", "")).casefold() for item in approvals if isinstance(item, dict)}
     role_list = [str(item.get("role", "")).casefold() for item in approvals if isinstance(item, dict)]
+    signers = [str(item.get("signer", "")).strip().casefold() for item in approvals if isinstance(item, dict)]
     for duplicate in sorted({role for role in role_list if role and role_list.count(role) > 1}):
         errors.append(f"Duplicate attestation approval: {duplicate}")
     for missing in sorted(APPROVAL_ROLES - roles):
         errors.append(f"Missing attestation approval: {missing}")
+    for duplicate in sorted({signer for signer in signers if signer and signers.count(signer) > 1}):
+        errors.append(f"Signer cannot approve multiple independent roles: {duplicate}")
     payload = signed_payload(attestation)
     for approval in approvals:
         if isinstance(approval, dict):
