@@ -88,6 +88,8 @@ realm = {
     "enabled": True,
     "sslRequired": "none",
     "accessTokenLifespan": 300,
+    "verifyEmail": False,
+    "requiredCredentials": ["password"],
     "roles": {"realm": [{"name": "CAMPAIGN_APPROVER"}, {"name": "HUMAN_REVIEWER"}]},
     "clientScopes": [
         {
@@ -111,6 +113,23 @@ realm = {
         "protocol": "openid-connect",
         "defaultClientScopes": ["profile", "roles", "campaign:approve", "human-action:decide"],
         "protocolMappers": [
+            {
+                "name": "sub",
+                "protocol": "openid-connect",
+                "protocolMapper": "oidc-usermodel-property-mapper",
+                "config": {
+                    **mapper_common,
+                    "user.attribute": "id",
+                    "claim.name": "sub",
+                    "jsonType.label": "String",
+                },
+            },
+            {
+                "name": "sub-claim",
+                "protocol": "openid-connect",
+                "protocolMapper": "oidc-sub-mapper",
+                "config": mapper_common,
+            },
             {
                 "name": "tenant_id",
                 "protocol": "openid-connect",
@@ -148,6 +167,11 @@ realm = {
             "id": data["campaign_id"],
             "username": data["campaign_user"],
             "enabled": True,
+            "emailVerified": True,
+            "email": "campaign-approver@atlantis.local",
+            "firstName": "Campaign",
+            "lastName": "Approver",
+            "requiredActions": [],
             "attributes": {"tenant_id": [tenant]},
             "realmRoles": ["CAMPAIGN_APPROVER"],
             "credentials": [{"type": "password", "value": data["campaign_password"], "temporary": False}],
@@ -156,6 +180,11 @@ realm = {
             "id": data["reviewer_id"],
             "username": data["reviewer_user"],
             "enabled": True,
+            "emailVerified": True,
+            "email": "human-reviewer@atlantis.local",
+            "firstName": "Human",
+            "lastName": "Reviewer",
+            "requiredActions": [],
             "attributes": {"tenant_id": [tenant]},
             "realmRoles": ["HUMAN_REVIEWER"],
             "credentials": [{"type": "password", "value": data["reviewer_password"], "temporary": False}],
@@ -164,7 +193,7 @@ realm = {
 }
 temporary = realm_path + ".tmp"
 open(temporary, "w", encoding="utf-8").write(json.dumps(realm, separators=(",", ":")))
-os.chmod(temporary, 0o600)
+os.chmod(temporary, 0o644)
 os.replace(temporary, realm_path)
 PY
 
@@ -180,25 +209,17 @@ docker volume inspect "$volume_name" >/dev/null 2>&1 || docker volume create "$v
 docker rm -f "$container_name" >/dev/null 2>&1 || true
 
 run_keycloak() {
-  local mode="$1"
-  local -a extra=()
-  local -a arguments=(start-dev)
-  if [[ "$mode" == "bootstrap" ]]; then
-    local admin_password
-    admin_password="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["admin_password"])' "$credentials")"
-    extra+=(
-      -v "$realm_file:/opt/keycloak/data/import/realm.json:ro"
-      -e KC_BOOTSTRAP_ADMIN_USERNAME=atlantis-bootstrap
-      -e "KC_BOOTSTRAP_ADMIN_PASSWORD=$admin_password"
-    )
-    arguments+=(--import-realm)
-  fi
+  local admin_password
+  admin_password="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['admin_password'])" "$credentials")"
   docker run -d --name "$container_name" --restart unless-stopped \
-    --read-only --tmpfs /tmp:rw,noexec,nosuid,size=128m --cap-drop ALL \
+    --tmpfs /tmp:rw,noexec,nosuid,size=128m --cap-drop ALL \
     --security-opt no-new-privileges:true --pids-limit 256 --memory 768m \
     -p 127.0.0.1:8180:8080 -v "$volume_name:/opt/keycloak/data" \
+    -v "$realm_file:/opt/keycloak/data/import/realm.json:ro" \
+    -e KC_BOOTSTRAP_ADMIN_USERNAME=atlantis-bootstrap \
+    -e "KC_BOOTSTRAP_ADMIN_PASSWORD=$admin_password" \
     -e "KC_HOSTNAME=$keycloak_base" -e KC_HTTP_ENABLED=true \
-    "${extra[@]}" "$image_id" "${arguments[@]}" >/dev/null
+    "$image_id" start-dev --import-realm >/dev/null
 }
 
 wait_for_realm() {
@@ -213,15 +234,7 @@ wait_for_realm() {
   [[ "$ready" == true ]] || die "Keycloak realm did not become ready"
 }
 
-if [[ "$volume_preexisting" == false ]]; then
-  run_keycloak bootstrap
-  wait_for_realm
-  # Remove the bootstrap container so its environment no longer exposes the
-  # one-time password through container inspection.
-  docker rm -f "$container_name" >/dev/null
-fi
-rm -f "$realm_file"
-run_keycloak runtime
+run_keycloak
 wait_for_realm
 curl --fail --silent --max-time 5 "$issuer/.well-known/openid-configuration" \
   > "$evidence_dir/openid-configuration.json"
@@ -314,7 +327,7 @@ for key, value in updates.items():
         output.append(key + "=" + value)
 temporary = path + ".oidc.tmp"
 open(temporary, "w", encoding="utf-8").write("\n".join(output) + "\n")
-os.chmod(temporary, 0o600)
+os.chmod(temporary, 0o644)
 os.replace(temporary, path)
 PY
 

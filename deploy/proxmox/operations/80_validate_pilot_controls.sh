@@ -102,9 +102,7 @@ python3 "$REPO_DIR/tools/pilot_live_probe.py" make-token --decision "$decision_f
 read_json() { python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))[sys.argv[2]])' "$token_context" "$1"; }
 jti="$(read_json jti)"; nonce_hash="$(read_json nonce_hash)"; token_hash="$(read_json token_hash)"
 decision_id="$(read_json decision_id)"; issued_at="$(read_json iat)"; expires_at="$(read_json exp)"
-database_psql -v jti="$jti" -v tenant="$tenant_id" -v decision="$decision_id" -v nonce="$nonce_hash" \
-  -v token="$token_hash" -v issued="$issued_at" -v expires="$expires_at" -c \
-  "INSERT INTO outbound_authorization(id,tenant_id,decision_id,channel,nonce_hash,token_hash,issued_at,expires_at) VALUES (:'jti',:'tenant',:'decision','VOICE',:'nonce',:'token',to_timestamp((:'issued')::double precision),to_timestamp((:'expires')::double precision))"
+database_psql -c "INSERT INTO outbound_authorization(id,tenant_id,decision_id,channel,nonce_hash,token_hash,issued_at,expires_at) VALUES ('$jti','$tenant_id','$decision_id','VOICE','$nonce_hash','$token_hash',to_timestamp($issued_at::double precision),to_timestamp($expires_at::double precision))"
 python3 "$REPO_DIR/tools/pilot_live_probe.py" voice-before \
   --workload-secrets "$ATLANTIS_SECRET_DIR/workload_secrets.json" --context "$token_context"
 compose restart voice_adapter >/dev/null

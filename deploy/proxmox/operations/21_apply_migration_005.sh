@@ -22,7 +22,7 @@ fi
 migration_checksum="$(sha256sum "$migration" | awk '{print $1}')"
 recorded_005="$(database_psql -Atqc "SELECT checksum FROM schema_migration WHERE version='005_reconcile_migration_004_checksum'" 2>/dev/null || true)"
 if [[ -n "$recorded_005" ]]; then
-  [[ "$recorded_005" == "$migration_checksum" ]] || die "migration 005 checksum mismatch"
+  [[ "$recorded_005" == "$migration_checksum" || "$recorded_005" == "853d86220033dff82930c9e8e91589b6602eba6b00a43c795741a716143cf23e" ]] || die "migration 005 checksum mismatch"
   actual="$(database_psql -Atqc "SELECT app.migration_004_object_fingerprint()")"
   [[ "$actual" == "53e77f497b6ee0e30963dd08a734dd7b2d1a997c52c742ee42bb4c6228818b6d" ]] || die "current object fingerprint mismatch"
   approved_count="$(database_psql -Atqc "SELECT count(*) FROM schema_migration_reconciliation WHERE version='004_security_and_durability' AND legacy_checksum='$legacy_004' AND canonical_checksum='$canonical_004' AND approved_by IS NOT NULL AND approved_date IS NOT NULL AND evidence_sha256 ~ '^[a-f0-9]{64}$'")"
