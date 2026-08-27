@@ -3,6 +3,7 @@ __pycache__/
 .pytest_cache/
 release/evidence/
 release/candidate/
+release/unsigned-evidence/
 .env
 *.pyc
 secrets/

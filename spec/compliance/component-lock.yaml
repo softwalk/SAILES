@@ -203,10 +203,10 @@ components:
     source_obligation: preserve-license-and-notices
   - name: kimi-k3
     kind: model
-    repository: https://huggingface.co/moonshotai
-    tag_or_revision: TBD
-    commit: TBD
-    artifact_or_model_id: TBD
+    repository: https://huggingface.co/moonshotai/Kimi-K3
+    tag_or_revision: a590ce090cb049c93a33dfe8c208ec652aa20503
+    commit: a590ce090cb049c93a33dfe8c208ec652aa20503
+    artifact_or_model_id: moonshotai/Kimi-K3
     digest: TBD
     license_spdx: LicenseRef-Kimi-K3
     license_text_sha256: TBD
@@ -215,13 +215,13 @@ components:
     source_obligation: review-model-license-and-thresholds
   - name: deepseek
     kind: model
-    repository: https://huggingface.co/deepseek-ai
-    tag_or_revision: TBD
-    commit: TBD
-    artifact_or_model_id: TBD
+    repository: https://huggingface.co/deepseek-ai/DeepSeek-V3
+    tag_or_revision: e815299b0bcbac849fa540c768ef21845365c9eb
+    commit: e815299b0bcbac849fa540c768ef21845365c9eb
+    artifact_or_model_id: deepseek-ai/DeepSeek-V3
     digest: TBD
-    license_spdx: TBD
+    license_spdx: LicenseRef-DeepSeek-Model-1.0
     license_text_sha256: TBD
     owner: MLOps
     distribution_mode: api-or-approved-weights
-    source_obligation: verify-exact-model-license
+    source_obligation: comply-with-deepseek-model-license-use-restrictions

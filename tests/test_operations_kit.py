@@ -22,7 +22,7 @@ class OperationsKitTests(unittest.TestCase):
             "21_apply_migration_005.sh", "22_apply_migration_006.sh",
             "23_apply_migration_007.sh", "24_apply_migration_008.sh", "30_build_images.sh",
             "03_setup_shadow_oidc_keycloak.sh", "40_deploy_shadow.sh", "60_rollback.sh",
-            "80_validate_pilot_controls.sh", "90_shadow_soak.sh",
+            "35_publish_oci_images.sh", "80_validate_pilot_controls.sh", "90_shadow_soak.sh",
         ):
             result = subprocess.run(["bash", str(OPS / name)], capture_output=True, text=True)
             self.assertNotEqual(result.returncode, 0, name)
@@ -116,6 +116,13 @@ ROLE:atlantis_suppression_admin:falsefalsefalsefalsefalsefalse
         self.assertIn('docker pull "$image_ref"', setup)
         self.assertIn('"$image_id" start-dev --import-realm', setup)
         self.assertIn("80_validate_pilot_controls.sh", setup)
+
+    def test_oci_publisher_records_only_remote_manifest_digests(self):
+        publisher = (OPS / "35_publish_oci_images.sh").read_text()
+        self.assertIn("docker buildx imagetools inspect", publisher)
+        self.assertIn("registry did not return a manifest digest", publisher)
+        self.assertNotIn("docker image inspect --format {{.Id}}", publisher)
+        self.assertIn("printf '%s\\t%s@%s\\n'", publisher)
 
 
 if __name__ == "__main__":

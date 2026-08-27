@@ -31,6 +31,14 @@ EVIDENCE_FILES = {
     "component-lock.json": "file",
 }
 APPROVAL_ROLES = {"release", "security", "legal"}
+FORBIDDEN_LICENSE_MARKERS = {
+    "NOASSERTION", "NONE", "UNKNOWN", "TBD", "LICENSEREF-GENERIC-OPENSOURCE",
+    "LICENSEREF-UNKNOWN", "LICENSEREF-UNSPECIFIED",
+}
+
+
+def license_is_unresolved(value: Any) -> bool:
+    return str(value or "").strip().upper() in FORBIDDEN_LICENSE_MARKERS
 
 
 def sha256_file(path: Path) -> str:
@@ -123,6 +131,11 @@ def validate_lock(path: Path, errors: list[str]) -> dict[str, Any] | None:
         license_digest = str(item.get("license_text_sha256", ""))
         if license_digest and license_digest.upper() not in PENDING and not re.fullmatch(r"[0-9a-f]{64}", license_digest):
             errors.append(f"Invalid license digest: {name}")
+        if license_is_unresolved(item.get("license_spdx")):
+            errors.append(f"Unresolved component license: {name}")
+        if (item.get("kind") == "oci-image" and name.casefold().startswith("atlantis-")
+                and not re.fullmatch(r"(?:oci|docker)://[^\s]+@sha256:[0-9a-f]{64}", str(item.get("repository", "")))):
+            errors.append(f"Atlantis OCI image is not pinned to a published registry manifest: {name}")
         combined = json.dumps(item, sort_keys=True)
         if re.search(r"(?:^|[/:@-])latest(?:$|[/:@-])", combined, re.I):
             errors.append(f"Mutable component reference: {name}")
@@ -148,6 +161,8 @@ def validate_licenses(evidence: Path, lock: dict[str, Any] | None, errors: list[
             continue
         if not target.is_file() or target.stat().st_size == 0:
             errors.append(f"Missing license text for component: {name}")
+        elif target.stat().st_size < 100:
+            errors.append(f"License text is implausibly short: {name}")
         elif sha256_file(target) != item.get("license_text_sha256"):
             errors.append(f"License text digest mismatch: {name}")
 
@@ -271,6 +286,15 @@ def validate_spdx(path: Path, lock: dict[str, Any] | None, errors: list[str]) ->
     if not isinstance(packages, list) or not packages:
         errors.append("SPDX SBOM has no packages")
         return
+    for package in packages:
+        if not isinstance(package, dict):
+            continue
+        name = str(package.get("name", "<unknown>"))
+        if license_is_unresolved(package.get("licenseDeclared")):
+            errors.append(f"Unresolved SPDX declared license: {name}")
+        concluded = package.get("licenseConcluded")
+        if concluded is not None and license_is_unresolved(concluded):
+            errors.append(f"Unresolved SPDX concluded license: {name}")
     names = [str(item.get("name", "")).casefold() for item in packages if isinstance(item, dict)]
     for name in sorted({name for name in names if name and names.count(name) > 1}):
         errors.append(f"Duplicate package in SPDX SBOM: {name}")
@@ -366,7 +390,7 @@ def validate_image_sboms(evidence: Path, lock: dict[str, Any] | None, errors: li
             if format_name == "spdx":
                 unknown = [
                     str(package.get("name", "<unknown>")) for package in data.get("packages", [])
-                    if isinstance(package, dict) and package.get("licenseDeclared") in {None, "", "NOASSERTION"}
+                    if isinstance(package, dict) and license_is_unresolved(package.get("licenseDeclared"))
                 ]
                 for package in unknown:
                     errors.append(f"Unknown package license in image SBOM: {display_name}::{package}")

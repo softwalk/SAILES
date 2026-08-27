@@ -1,4 +1,5 @@
 import hashlib
+import json
 import tempfile
 import unittest
 import zipfile
@@ -83,6 +84,24 @@ class DistributionCandidateTests(unittest.TestCase):
         self.assertFalse(queue["legal_approval_recorded"])
         self.assertEqual("example", queue["component_declarations"][0]["name"])
         self.assertEqual("dependency", queue["python_package_declarations"][0]["name"])
+
+    def test_model_descriptor_binds_exact_remote_tree(self):
+        component = {"name": "kimi-k3", "revision": "abc", "artifact": "TBD", "digest": "TBD"}
+        remote = {"sha": "abc", "siblings": [
+            {"rfilename": "weights.bin", "blobId": "blob", "size": 42},
+            {"rfilename": "config.json", "blobId": "config", "size": 7},
+        ]}
+        with tempfile.TemporaryDirectory() as directory:
+            response = mock.MagicMock()
+            response.__enter__.return_value = response
+            response.__exit__.return_value = False
+            response.read.return_value = json.dumps(remote).encode()
+            with mock.patch.object(candidate, "OUT", Path(directory)), mock.patch(
+                "urllib.request.urlopen", return_value=response,
+            ):
+                candidate.materialize_model_descriptors([component], fetch=True)
+            self.assertEqual("model-descriptors/kimi-k3.json", component["artifact"])
+            self.assertRegex(component["digest"], r"^sha256:[0-9a-f]{64}$")
 
 
 if __name__ == "__main__":

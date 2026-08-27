@@ -10,7 +10,6 @@ RELEASE="${ATLANTIS_RELEASE:-0.9.0-rc5}"
 log "Publishing Atlantis OCI images to $REGISTRY"
 
 images=(
-  atlantis-python-base
   atlantis-policy-gateway
   atlantis-crm-api
   atlantis-orchestrator
@@ -30,8 +29,9 @@ for img in "${images[@]}"; do
   log "Tagging and pushing $remote_tag"
   docker tag "$local_tag" "$remote_tag"
   docker push "$remote_tag"
-  remote_digest="$(docker inspect --format="{{index .RepoDigests 0}}" "$remote_tag" 2>/dev/null || echo "$remote_tag@$(docker image inspect --format {{.Id}} "$local_tag")")"
-  printf %st%sn "$img" "$remote_digest" >> "$output"
+  remote_digest="$(docker buildx imagetools inspect "$remote_tag" --format '{{json .Manifest.Digest}}' | tr -d '"')"
+  [[ "$remote_digest" =~ ^sha256:[0-9a-f]{64}$ ]] || die "registry did not return a manifest digest for $remote_tag"
+  printf '%s\t%s@%s\n' "$img" "$REGISTRY/$img" "$remote_digest" >> "$output"
 done
 
 chmod 600 "$output"

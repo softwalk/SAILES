@@ -61,6 +61,8 @@ PINNED_SOURCE_REVISIONS = {
     "litellm": {"revision": "418c7c6012d7c39a9d4a28c72cabe1995595ad2b", "evidence": "oci-label:org.opencontainers.image.revision"},
     "opentelemetry-collector": {"revision": "bef563ebb0f3a73fb8681d4ca4178ddf244042b6", "evidence": "oci-label:org.opencontainers.image.revision"},
     "openoutreach": {"revision": "ba6c25d94d8e644cf97d6e7df7e805106526c990", "evidence": "git-tag:v0.1.0"},
+    "kimi-k3": {"revision": "a590ce090cb049c93a33dfe8c208ec652aa20503", "evidence": "huggingface-revision"},
+    "deepseek": {"revision": "e815299b0bcbac849fa540c768ef21845365c9eb", "evidence": "huggingface-revision"},
 }
 COMPONENT_LICENSE_SOURCES = {
     "python-runtime": ("https://raw.githubusercontent.com/python/cpython/2abcf904b8dac8c999d2b3aac76681abb333798a/LICENSE", "3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf"),
@@ -75,7 +77,15 @@ COMPONENT_LICENSE_SOURCES = {
     "opentelemetry-collector": ("https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-releases/bef563ebb0f3a73fb8681d4ca4178ddf244042b6/LICENSE", "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"),
     "caddy": ("https://raw.githubusercontent.com/caddyserver/caddy/7088605cc11c52c2777ab613dfc5c2a9816006e4/LICENSE", "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"),
     "openoutreach": ("https://raw.githubusercontent.com/eracle/OpenOutreach/ba6c25d94d8e644cf97d6e7df7e805106526c990/LICENCE.md", "ccb349b4132ed7737f25e5adebfe61f3d52dca33708df1e50352320438d1d4c2"),
+    "kimi-k3": ("https://huggingface.co/moonshotai/Kimi-K3/raw/a590ce090cb049c93a33dfe8c208ec652aa20503/LICENSE", "20c797ce19af0c17de52c6afb144644768a591c521655f5ebf5712c9850f2887"),
+    "deepseek": ("https://huggingface.co/deepseek-ai/DeepSeek-V3/raw/e815299b0bcbac849fa540c768ef21845365c9eb/LICENSE-MODEL", "ccfee4895df06bcab524151c278e8dde88bbe76165a24ecbcbcf9fafd71fd2b3"),
 }
+MODEL_METADATA = {
+    "kimi-k3": "moonshotai/Kimi-K3",
+    "deepseek": "deepseek-ai/DeepSeek-V3",
+}
+OPENOUTREACH_RUNNER = ROOT / "tools" / "openoutreach_container_runner.py"
+OPENOUTREACH_IMAGE = "ghcr.io/eracle/openoutreach@sha256:d6f355877c8f915057fe019a9f6b991a28e3752757c927de34280d9f56a9519b"
 PACKAGE_LICENSE_SOURCES = {
     "langsmith": ("https://raw.githubusercontent.com/langchain-ai/langsmith-sdk/930be18058789110d7d9883d7b7d481f10fa1830/LICENSE", "34e0b9842c7a31d34e53bc7eb224e81e07a34996106e029bbc72dea2d449f496"),
 }
@@ -458,6 +468,39 @@ def materialize_corresponding_sources(components: list[dict[str, Any]], fetch_pi
         component["source_sha256"] = source["sha256"]
 
 
+def materialize_model_descriptors(components: list[dict[str, Any]], fetch: bool) -> None:
+    root = OUT / "model-descriptors"
+    root.mkdir(parents=True, exist_ok=True)
+    for component in components:
+        model_id = MODEL_METADATA.get(component["name"])
+        if model_id is None:
+            continue
+        revision = component["revision"]
+        target = root / f"{component['name']}.json"
+        if fetch:
+            url = f"https://huggingface.co/api/models/{model_id}/revision/{revision}?blobs=true"
+            with urllib.request.urlopen(url, timeout=30) as response:
+                remote = json.load(response)
+            if remote.get("sha") != revision:
+                raise ValueError(f"model repository revision mismatch: {model_id}")
+            descriptor = {
+                "schema_version": 1,
+                "provider": "huggingface",
+                "model_id": model_id,
+                "revision": revision,
+                "files": sorted(({
+                    key: sibling[key] for key in ("rfilename", "blobId", "size", "lfs") if key in sibling
+                } for sibling in remote.get("siblings", [])), key=lambda item: item["rfilename"]),
+            }
+            target.write_text(canonical_json(descriptor) + "\n", encoding="utf-8")
+        if target.is_file():
+            descriptor = json.loads(target.read_text(encoding="utf-8"))
+            if descriptor.get("model_id") != model_id or descriptor.get("revision") != revision:
+                raise ValueError(f"cached model descriptor mismatch: {model_id}")
+            component["artifact"] = target.relative_to(OUT).as_posix()
+            component["digest"] = f"sha256:{hashlib.sha256(target.read_bytes()).hexdigest()}"
+
+
 def normalized_components(blockers: list[dict[str, str]]) -> list[dict[str, str]]:
     source = yaml.safe_load(SPEC_LOCK.read_text(encoding="utf-8"))
     components: list[dict[str, str]] = []
@@ -647,6 +690,7 @@ def main() -> int:
     parser.add_argument("--syft", type=Path, default=Path("syft"), help="path to the Syft executable")
     parser.add_argument("--fetch-licenses", action="store_true", help="fetch license texts pinned by URL and SHA-256")
     parser.add_argument("--fetch-sources", action="store_true", help="fetch corresponding-source archives pinned by SHA-256")
+    parser.add_argument("--fetch-model-metadata", action="store_true", help="fetch pinned model repository descriptors without downloading weights")
     args = parser.parse_args()
     blockers: list[dict[str, str]] = []
     components = normalized_components(blockers)
@@ -664,11 +708,18 @@ def main() -> int:
     (OUT / "LICENSES" / "Atlantis-Proprietary.txt").write_bytes((ROOT / "LICENSE").read_bytes())
     materialize_component_licenses(components, args.fetch_licenses)
     materialize_corresponding_sources(components, args.fetch_sources)
+    materialize_model_descriptors(components, args.fetch_model_metadata)
     runner = Path("/opt/atlantis/opensource/openoutreach-runner/runner.sh")
     if runner.is_file():
         runner_text = runner.read_text(encoding="utf-8", errors="replace")
-        reason = "installed-runtime-is-fixture" if "leads de ejemplo" in runner_text or "example.org/dir/" in runner_text else "installed-runtime-digest-not-bound-to-candidate"
-        blockers.append({"component": "openoutreach", "field": "runtime", "reason": reason})
+        if "leads de ejemplo" in runner_text or "example.org/dir/" in runner_text:
+            blockers.append({"component": "openoutreach", "field": "runtime", "reason": "installed-runtime-is-fixture"})
+        elif runner.read_bytes() != OPENOUTREACH_RUNNER.read_bytes():
+            blockers.append({"component": "openoutreach", "field": "runtime", "reason": "installed-runtime-digest-not-bound-to-candidate"})
+        else:
+            openoutreach = next(item for item in components if item["name"] == "openoutreach")
+            openoutreach["runtime_wrapper_sha256"] = hashlib.sha256(runner.read_bytes()).hexdigest()
+            openoutreach["runtime_image"] = OPENOUTREACH_IMAGE
     else:
         blockers.append({"component": "openoutreach", "field": "runtime", "reason": "external-runtime-not-installed"})
     component_by_name = {item["name"].casefold(): item for item in components}

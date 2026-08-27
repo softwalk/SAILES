@@ -57,7 +57,7 @@ class DistributionComplianceGateTests(unittest.TestCase):
             target.mkdir()
             (target / "README.md").write_text(f"Evidence for {directory}\n")
         license_path = self.evidence / "LICENSES" / "Apache-2.0.txt"
-        license_path.write_text("Apache License test fixture\n")
+        license_path.write_text("Apache License test fixture for validation only. " * 4 + "\n")
         lock["components"][0]["license_text_sha256"] = compliance_gate.sha256_file(license_path)
         (self.evidence / "component-lock.json").write_text(json.dumps(lock))
         source_manifest = {"components": [{"name": "example", "disposition": "not-required"}]}
@@ -210,6 +210,32 @@ class DistributionComplianceGateTests(unittest.TestCase):
         self.write_signed_attestation()
         errors = compliance_gate.distribution_errors(self.root, self.artifact)
         self.assertIn("Unknown package license in image SBOM: example::inner", errors)
+
+    def test_generic_license_substitution_is_blocked(self):
+        self.write_complete_unsigned_evidence()
+        spdx_path = self.evidence / "sbom.spdx.json"
+        spdx = json.loads(spdx_path.read_text())
+        spdx["packages"][0]["licenseDeclared"] = "LicenseRef-Generic-OpenSource"
+        spdx_path.write_text(json.dumps(spdx))
+        errors = []
+        lock = compliance_gate.validate_lock(self.evidence / "component-lock.json", errors)
+        compliance_gate.validate_spdx(spdx_path, lock, errors)
+        self.assertIn("Unresolved SPDX declared license: example", errors)
+
+    def test_atlantis_image_requires_published_registry_digest(self):
+        self.write_complete_unsigned_evidence()
+        lock_path = self.evidence / "component-lock.json"
+        lock = json.loads(lock_path.read_text())
+        lock["components"][0].update({
+            "name": "atlantis-example", "kind": "oci-image",
+            "repository": "https://github.com/softwalk/SAILES",
+        })
+        lock_path.write_text(json.dumps(lock))
+        errors = []
+        compliance_gate.validate_lock(lock_path, errors)
+        self.assertIn(
+            "Atlantis OCI image is not pinned to a published registry manifest: atlantis-example", errors,
+        )
 
 
 if __name__ == "__main__":
